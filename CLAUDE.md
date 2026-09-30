@@ -1,0 +1,127 @@
+# CLAUDE.md
+
+Guidance for Claude Code, and for anyone else, working in this repository.
+
+## What this is
+
+Speed Test is an iOS, iPadOS and macOS app. It fetches the list of public speed-test servers, picks the five
+closest to the device, pings them over real ICMP, and measures download and upload speed on the one with the
+lowest latency. SwiftUI and The Composable Architecture (TCA) on top of a small local Swift package.
+
+## Layout
+
+- `SpeedTest/`: the app target (`@main`, scenes, assets). Kept thin.
+- `SpeedTestPackage/`: all the real code, in six modules.
+  - `ICMP`: ICMP echo over unprivileged datagram sockets. No third-party dependencies.
+  - `SpeedTestKit`: the speed-test engine (an actor) and its collaborators. No UI and no TCA.
+  - `SpeedTestClient`: the TCA dependency that exposes the engine.
+  - `DesignSystem`: formatting, colors, button and card styles, the speed chart. Takes plain values.
+  - `HistoryFeature`: past results in SQLite through SQLiteData, with a reducer and a list.
+  - `SpeedTestFeature`: the main reducer and screen.
+- `SpeedTestUITests/`: two XCUITest smoke tests against a scripted run.
+- `docs/DESIGN.md`: the technical design.
+
+## Build and test
+
+Run from the repository root.
+
+```bash
+# Fast: all package tests on macOS
+swift test --package-path SpeedTestPackage
+
+# One test target
+swift test --package-path SpeedTestPackage --filter ICMPTests
+
+# Package tests on the iOS simulator (run inside SpeedTestPackage/)
+xcodebuild test -scheme SpeedTestPackage-Package \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.5' -skipMacroValidation
+
+# The app
+xcodebuild build -project SpeedTest.xcodeproj -scheme SpeedTest \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.5' -skipMacroValidation
+xcodebuild build -project SpeedTest.xcodeproj -scheme SpeedTest -destination 'platform=macOS' \
+  -skipMacroValidation CODE_SIGNING_ALLOWED=NO
+
+# Format and lint (both must be clean before a commit)
+./swiftformat.sh && ./swiftlint.sh
+```
+
+The tools are pinned in the `Mintfile`; `mint bootstrap` installs them.
+
+## Toolchain
+
+- Swift 6.3 tools version, Swift 6 language mode, iOS 17 and macOS 14 minimum.
+- Developed with Xcode 26.6. CI also builds with Xcode 27.0, so nothing may need Swift 6.4
+  (no `await` inside `defer`, no `some P?` without parentheses, no `@diagnose`).
+- Every package target enables `NonisolatedNonsendingByDefault` and `InferIsolatedConformances`.
+  The package does not use default main-actor isolation: the dependency macros don't allow it.
+- No warnings-as-errors in `Package.swift`. CI fails on warnings in this repo's own sources instead.
+
+## Conventions
+
+**Reducers**
+- `@Reducer public struct X: Sendable`. The macro adds the `Reducer` conformance; `Sendable` is needed because
+  effects capture the reducer's dependencies.
+- `@ObservableState public struct State: Equatable`, `public init() {}`.
+- `Action: ViewAction` with an `@CasePathable enum View`, plus flat `xxxResponse(Result<T, any Error>)` cases.
+- A `Reduce { state, action in switch … }` body, with a blank line before each `return .none`.
+- Children: `Scope(\.child, action: \.child) { Child() }`; views: `store.scope(\.child, action: \.child)`.
+  Never the `state:` label.
+
+**Effects**
+- `.run { [value = state.value] send in await send(.xResponse(Result { … })) }`.
+- One cancel ID type per long-running effect: `struct FooId: Hashable, Sendable {}` with `.cancellable(id:)`.
+- Time through `@Dependency(\.continuousClock)`, durations as static constants.
+- The package enables TCA's `ComposableArchitecture2Deprecations` trait. Don't use what it or TCA 1.25 deprecate:
+  `Effect.concatenate`, `Effect.map`, `.animation()`/`.debounce`/`.throttle` on effects, `store.publisher`,
+  `Store.withState`, the reducer-builder `onChange`, `@Reducer(state:action:)`, `store.send(_:animation:)`.
+- Animation: `await send(.x, animation: …)` in an effect, `withAnimation { store.send(.x) }` in a view.
+- Never send an action synchronously while another action is being reduced.
+
+**Dependencies**
+- `@DependencyClient` structs with `@Sendable` closures; non-throwing endpoints get a default.
+- Registered with `@DependencyEntry` in `extension DependencyValues`.
+- Interface, live and scripted/test values in separate files.
+- `SpeedTestKit`'s engine takes its collaborators through `init`; only `SpeedTestClient` is registered.
+
+**Errors**
+- Plain `throws`, not typed throws. `any Error` is written out.
+- The engine has one mapping function from any error to `SpeedTestError`.
+
+**Views**
+- `@Bindable public var store` with `@ViewAction(for:)` and `send(…)`.
+- `@State` only for plain view-local values, with the initial value at the declaration and never assigned in an
+  `init` (in the iOS 27 SDK `@State` is a macro and that pattern doesn't compile).
+- Sub-views as `private var x: some View` or small structs; `#Preview` for previews.
+- Every `Text` with a literal string passes `bundle: .module`; numbers built in code use `Text(verbatim:)`.
+- Accessibility identifiers: `startStopButton`, `serverField`, `pingField`, `downloadField`, `uploadField`,
+  `phaseLabel`, `bigNumber`.
+
+**Tests**
+- Swift Testing: `@MainActor @Suite struct XTests`, exhaustive `TestStore`.
+- Dependencies through the `.dependency(…)` and `.dependencies { … }` test traits, or `withDependencies:`.
+- Actions sent and received by key path: `store.send(\.view.startStopTapped)`.
+- `TestClock`/`ImmediateClock` for time, `LockIsolated` for capturing calls.
+- Snapshot tests run locally only (references are recorded on one machine); CI skips them.
+
+**Style**
+- The file header on every file:
+
+  ```swift
+  //
+  //  FileName.swift
+  //  ModuleName
+  //
+  //  Created by Premysl Vlcek on dd.MM.yyyy.
+  //
+  ```
+- `public extension X {}` for public API in extensions. `MARK` sparingly.
+- No `@unchecked Sendable`.
+- HTTPS only: no `NSAppTransportSecurity` exceptions, and SwiftLint's `force_https` rule has no exceptions.
+
+## Commits
+
+- Small commits in the imperative mood. Each one builds and passes its tests.
+- Plain messages: no `Co-Authored-By` trailers, no session links, no "Generated with" lines.
+- Claude Code doesn't commit, push, tag or create repositories here. It leaves its changes in the working tree,
+  shows `git status` and `git diff --stat`, and the maintainer reviews and commits.
