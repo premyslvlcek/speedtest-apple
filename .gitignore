@@ -1,0 +1,19 @@
+# macOS
+.DS_Store
+
+# Xcode
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+DerivedData/
+/build/
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# CI logs written by the workflow
+*.log
+
+# Local notes, not part of the project (a symlink, so no trailing slash)
+/docs/private
