@@ -1,0 +1,114 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  xcode-26:
+    name: Xcode 26.6 (iOS 26.5, macOS)
+    runs-on: macos-26
+    timeout-minutes: 60
+    env:
+      IOS_DESTINATION: platform=iOS Simulator,name=iPhone 17 Pro,OS=26.5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode 26.6
+        run: sudo xcode-select -s /Applications/Xcode_26.6.app
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Cache Mint
+        uses: actions/cache@v4
+        with:
+          path: ~/.mint
+          key: mint-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Mintfile') }}
+
+      - name: Lint
+        run: |
+          brew list mint >/dev/null 2>&1 || brew install mint
+          mint bootstrap
+          ./swiftlint.sh
+          ./swiftformat.sh --lint
+
+      - name: Package tests (macOS)
+        run: |
+          set -o pipefail
+          swift test --package-path SpeedTestPackage 2>&1 | tee swift-test-macos.log
+          .github/scripts/check-warnings.sh swift-test-macos.log
+
+      - name: Package tests (iOS)
+        working-directory: SpeedTestPackage
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -scheme SpeedTestPackage-Package \
+            -destination "$IOS_DESTINATION" \
+            -skipMacroValidation \
+            -skip-testing:SpeedTestFeatureTests/SnapshotTests \
+            -quiet 2>&1 | tee ../package-tests-ios.log
+          ../.github/scripts/check-warnings.sh ../package-tests-ios.log
+
+      - name: Build macOS app
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project SpeedTest.xcodeproj \
+            -scheme SpeedTest \
+            -destination 'platform=macOS' \
+            -skipMacroValidation \
+            CODE_SIGNING_ALLOWED=NO \
+            -quiet 2>&1 | tee build-macos.log
+          .github/scripts/check-warnings.sh build-macos.log
+
+  xcode-27:
+    name: Xcode 27.0 (iOS 27.0, macOS 27)
+    runs-on: xcode-27
+    timeout-minutes: 60
+    env:
+      IOS_DESTINATION: platform=iOS Simulator,name=iPhone 17,OS=27.0
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode 27.0
+        run: sudo xcode-select -s /Applications/Xcode_27.0.app
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      # Packages re-resolve here on purpose: under Swift 6.4 the Point-Free packages pick their tools-6.4
+      # manifests (swift-issue-reporting 2.x), so the committed Package.resolved from Xcode 26.6 differs.
+      - name: Package tests (macOS)
+        run: swift test --package-path SpeedTestPackage
+
+      - name: Package tests (iOS)
+        working-directory: SpeedTestPackage
+        run: |
+          xcodebuild test \
+            -scheme SpeedTestPackage-Package \
+            -destination "$IOS_DESTINATION" \
+            -skipMacroValidation \
+            -skip-testing:SpeedTestFeatureTests/SnapshotTests \
+            -quiet
+
+      - name: Build macOS app
+        run: |
+          xcodebuild build \
+            -project SpeedTest.xcodeproj \
+            -scheme SpeedTest \
+            -destination 'platform=macOS' \
+            -skipMacroValidation \
+            CODE_SIGNING_ALLOWED=NO \
+            -quiet
