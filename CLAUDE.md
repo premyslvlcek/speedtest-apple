@@ -67,15 +67,21 @@ The tools are pinned in the `Mintfile`; `mint bootstrap` installs them.
 - A `Reduce { state, action in switch … }` body, with a blank line before each `return .none`.
 - Children: `Scope(\.child, action: \.child) { Child() }`; views: `store.scope(\.child, action: \.child)`.
   Never the `state:` label.
+- Share logic with a method on the reducer that takes `inout State` and returns an `Effect<Action>` (one start helper
+  for Start and Retry, say), never by sending another action with `.send`.
 
 **Effects**
 - `.run { [value = state.value] send in await send(.xResponse(Result { … })) }`.
-- One cancel ID type per long-running effect: `struct FooId: Hashable, Sendable {}` with `.cancellable(id:)`.
+- One cancel ID type per long-running effect: `struct FooId: Hashable, Sendable {}` with `.cancellable(id:)`. The effect
+  that starts something restartable uses `cancelInFlight: true`.
 - Time through `@Dependency(\.continuousClock)`, durations as static constants.
 - The package enables TCA's `ComposableArchitecture2Deprecations` trait. Don't use what it or TCA 1.25 deprecate:
   `Effect.concatenate`, `Effect.map`, `.animation()`/`.debounce`/`.throttle` on effects, `store.publisher`,
-  `Store.withState`, the reducer-builder `onChange`, `@Reducer(state:action:)`, `store.send(_:animation:)`.
-- Animation: `await send(.x, animation: …)` in an effect, `withAnimation { store.send(.x) }` in a view.
+  `Store.withState`, the reducer-builder `onChange`, `@Reducer(state:action:)`, `store.send(_:animation:)`,
+  `store.send(_:transaction:)`, `Effect.transaction(_:)`, `Scope(state:action:)`, and calling `reduce(into:action:)`
+  directly. In a `@ViewAction` view, `send(_:animation:)` forwards to the deprecated `store.send`, so it's out too.
+- Animation: `await send(.x, animation: …)` in an effect, `withAnimation { _ = send(.x) }` in a view (`@ViewAction`
+  warns about `store.send`; `_ =` drops the returned task).
 - Never send an action synchronously while another action is being reduced.
 
 **Dependencies**
