@@ -11,13 +11,13 @@ lowest latency. SwiftUI and The Composable Architecture (TCA) on top of a small 
 ## Layout
 
 - `SpeedTest/`: the app target (`@main`, scenes, assets). Kept thin.
-- `SpeedTestPackage/`: all the real code, in six modules.
+- `SpeedTestPackage/`: all the real code, in five modules.
   - `ICMP`: ICMP echo over unprivileged datagram sockets. No third-party dependencies.
-  - `SpeedTestKit`: the speed-test engine (an actor) and its collaborators. No UI and no TCA.
-  - `SpeedTestClient`: the TCA dependency that exposes the engine.
+  - `SpeedTestKit`: the collaborators of a run (dependency clients), the transfer meter and the pure rules (server
+    selection, throughput sampling, error mapping). No UI and no TCA.
   - `DesignSystem`: formatting, colors, button and card styles, the speed chart. Takes plain values.
   - `HistoryFeature`: past results in SQLite through SQLiteData, with a reducer and a list.
-  - `SpeedTestFeature`: the main reducer and screen.
+  - `SpeedTestFeature`: the reducer that drives a run step by step, and the screen.
 - `SpeedTestUITests/`: two XCUITest smoke tests against a scripted run.
 - `docs/DESIGN.md`: the technical design.
 
@@ -82,7 +82,10 @@ The tools are pinned in the `Mintfile`; `mint bootstrap` installs them.
 - `@DependencyClient` structs with `@Sendable` closures; non-throwing endpoints get a default.
 - Registered with `@DependencyEntry` in `extension DependencyValues`.
 - Interface, live and scripted/test values in separate files.
-- `SpeedTestKit`'s engine takes its collaborators through `init`; only `SpeedTestClient` is registered.
+- A live value that needs other dependencies resolves them with `@Dependency`, not through `init`. The macro's
+  `init()` (every endpoint unimplemented) is the test value.
+- The reducer owns the flow and every decision. A dependency wraps one piece of I/O, or one piece of concurrency that
+  can't live in `State` (the transfer meter's live connection handle). No engine that runs the whole flow.
 
 **Errors**
 - Plain `throws`, not typed throws. `any Error` is written out.

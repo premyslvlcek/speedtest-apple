@@ -15,8 +15,6 @@ public enum SpeedTestError: Error, Sendable, Equatable {
     case noServers
     /// The first choice and the failover both failed before their first byte.
     case transferFailed
-    /// A run is already active and its consumer is still listening.
-    case alreadyRunning
     /// The primary network interface changed after the first byte.
     case networkChanged
     /// Every connection failed after the first byte.
@@ -28,7 +26,7 @@ public enum SpeedTestError: Error, Sendable, Equatable {
         case .connectionLost, .networkChanged:
             true
 
-        case .alreadyRunning, .directoryUnavailable, .noServers, .offline, .rateLimited, .transferFailed:
+        case .directoryUnavailable, .noServers, .offline, .rateLimited, .transferFailed:
             false
         }
     }

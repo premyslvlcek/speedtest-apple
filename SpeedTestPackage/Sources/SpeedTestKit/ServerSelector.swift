@@ -37,7 +37,7 @@ public enum ServerSelector {
     /// 3. servers with no reply (or still pending), nearest first; in approximate mode, directory order
     ///
     /// Ties go to the closer server, else the earlier one in the input. The first entry is the server to
-    /// measure; the second is the failover target.
+    /// measure; `failoverTarget(after:in:)` picks the one to try if it never starts.
     public static func order(_ candidates: [Candidate], minimumReplies: Int) -> [Candidate] {
         candidates.enumerated()
             .sorted { lhs, rhs in
@@ -45,6 +45,16 @@ public enum ServerSelector {
                     < rankKey(rhs.element, offset: rhs.offset, minimumReplies: minimumReplies)
             }
             .map(\.element)
+    }
+
+    /// The server to try when `failed` sends nothing: the next entry of `order` after it on another host, else
+    /// the next entry. A second port of a host that just failed would most likely fail the same way.
+    public static func failoverTarget(after failed: Candidate, in order: [Candidate]) -> Candidate? {
+        guard let index = order.firstIndex(of: failed) else {
+            return nil
+        }
+        let rest = order[(index + 1)...]
+        return rest.first { $0.server.host != failed.server.host } ?? rest.first
     }
 
     /// How much a candidate's ping can be trusted, best first. Cases compare in declaration order.
@@ -74,18 +84,5 @@ public enum ServerSelector {
         let result = candidate.pingResult
         let tier = Tier(received: result?.received ?? 0, minimumReplies: minimumReplies)
         return (tier, result?.median ?? .zero, candidate.distance ?? 0, offset)
-    }
-}
-
-private extension Candidate {
-    /// The ping result, once it has arrived.
-    var pingResult: PingResult? {
-        switch ping {
-        case let .finished(result):
-            result
-
-        case .pending:
-            nil
-        }
     }
 }

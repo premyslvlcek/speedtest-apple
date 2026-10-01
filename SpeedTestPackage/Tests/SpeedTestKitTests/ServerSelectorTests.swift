@@ -172,6 +172,30 @@ import Testing
     }
 }
 
+@Suite struct FailoverTargetTests {
+    let first = Candidate(server: .fixture("vinohrady", port: 80), distance: 900)
+    let otherPort = Candidate(server: .fixture("vinohrady", port: 88), distance: 1100)
+    let otherHost = Candidate(server: .fixture("karlin"), distance: 2000)
+
+    @Test func prefersTheNextEntryOnAnotherHost() {
+        let target = ServerSelector.failoverTarget(after: first, in: [first, otherPort, otherHost])
+
+        #expect(target == otherHost)
+    }
+
+    @Test func takesAnotherPortOfTheSameHostWhenNothingElseIsLeft() {
+        let target = ServerSelector.failoverTarget(after: first, in: [first, otherPort])
+
+        #expect(target == otherPort)
+    }
+
+    @Test func hasNoTargetAfterTheLastEntry() {
+        #expect(ServerSelector.failoverTarget(after: first, in: [first]) == nil)
+        // Only what comes after the failed server counts: the order is best first.
+        #expect(ServerSelector.failoverTarget(after: first, in: [otherHost, first]) == nil)
+    }
+}
+
 /// A finished ping with these round-trip times, out of `sent` requests.
 private func replies(_ milliseconds: [Int], sent: Int = 5) -> PingState {
     .finished(PingResult(rtts: milliseconds.map { .milliseconds($0) }, sent: sent))

@@ -29,7 +29,6 @@ let package = Package(
     products: [
         .library(name: "ICMP", targets: ["ICMP"]),
         .library(name: "SpeedTestKit", targets: ["SpeedTestKit"]),
-        .library(name: "SpeedTestClient", targets: ["SpeedTestClient"]),
         .library(name: "DesignSystem", targets: ["DesignSystem"]),
         .library(name: "HistoryFeature", targets: ["HistoryFeature"]),
         .library(name: "SpeedTestFeature", targets: ["SpeedTestFeature"])
@@ -57,11 +56,6 @@ let package = Package(
             swiftSettings: swiftSettings
         ),
         .target(
-            name: "SpeedTestClient",
-            dependencies: ["SpeedTestKit", "ICMP", composableArchitecture],
-            swiftSettings: swiftSettings
-        ),
-        .target(
             name: "DesignSystem",
             swiftSettings: swiftSettings
         ),
@@ -74,7 +68,6 @@ let package = Package(
         .target(
             name: "SpeedTestFeature",
             dependencies: [
-                "SpeedTestClient",
                 "HistoryFeature",
                 "DesignSystem",
                 "SpeedTestKit",
@@ -94,11 +87,6 @@ let package = Package(
             name: "SpeedTestKitTests",
             dependencies: ["SpeedTestKit", "ICMP", clocks, concurrencyExtras, dependenciesTestSupport],
             resources: [.copy("Fixtures")],
-            swiftSettings: swiftSettings
-        ),
-        .testTarget(
-            name: "SpeedTestClientTests",
-            dependencies: ["SpeedTestClient", "ICMP", "SpeedTestKit", composableArchitecture, clocks],
             swiftSettings: swiftSettings
         ),
         .testTarget(

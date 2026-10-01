@@ -34,7 +34,7 @@ import Testing
     }
 
     @Test(arguments: [
-        SpeedTestError.offline, .directoryUnavailable, .rateLimited, .noServers, .transferFailed, .alreadyRunning
+        SpeedTestError.offline, .directoryUnavailable, .rateLimited, .noServers, .transferFailed
     ])
     func failuresAreNotInterruptions(error: SpeedTestError) {
         #expect(!error.isInterruption)
