@@ -16,5 +16,6 @@ public struct Locator: Sendable {
 }
 
 public extension DependencyValues {
-    @DependencyEntry var locator = Locator()
+    @DependencyEntry(liveValue: Locator.live)
+    var locator = Locator()
 }
