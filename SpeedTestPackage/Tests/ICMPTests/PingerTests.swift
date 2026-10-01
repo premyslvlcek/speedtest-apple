@@ -132,6 +132,23 @@ import Testing
         #expect(result == .noReply(sent: 5))
     }
 
+    @Test func anAnsweredPingReturnsWithoutWaitingForTheTimeout() async {
+        // One request, answered inside `send`, so there's no interval to wait for. The clock never moves, so
+        // the timeout after the request can never pass: `ping()` returns only because every request was
+        // answered and it stopped the sender. Without that, it would wait forever (until the time limit).
+        let socket = FakeSocket()
+        let pinger = Pinger(
+            host: "example.test",
+            clock: TestClock(),
+            resolve: { _ in Self.address },
+            openSocket: socket.opener
+        )
+
+        let result = await pinger.ping(PingConfiguration(count: 1))
+
+        #expect(result == PingResult(rtts: [.zero], sent: 1))
+    }
+
     // MARK: - Cancellation (Stop)
 
     @Test func aPingCancelledBeforeItStartsSendsNothing() async {

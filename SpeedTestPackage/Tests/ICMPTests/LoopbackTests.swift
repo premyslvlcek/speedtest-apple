@@ -40,16 +40,4 @@ import Testing
             #expect(result.received == 5)
         }
     }
-
-    @Test func anAnsweredPingReturnsWithoutWaitingForTheTimeout() async {
-        // 5 requests 100 ms apart take 0.4 s; loopback answers each within microseconds. Waiting out the
-        // 1 s timeout after the last request (no early exit, or a sender left running) would take 1.4 s.
-        let clock = ContinuousClock()
-        let start = clock.now
-
-        let result = await Pinger(host: "127.0.0.1").ping()
-
-        #expect(result.received == 5)
-        #expect(start.duration(to: clock.now) < .seconds(1))
-    }
 }
