@@ -86,7 +86,8 @@ The tools are pinned in the `Mintfile`; `mint bootstrap` installs them.
 
 **Errors**
 - Plain `throws`, not typed throws. `any Error` is written out.
-- The engine has one mapping function from any error to `SpeedTestError`.
+- Every error is mapped to a `SpeedTestError` in one place: `SpeedTestError.mapping` for a run,
+  `SpeedTestError.directoryMapping` for the directory and token requests. Both return `nil` for cancellation.
 
 **Views**
 - `@Bindable public var store` with `@ViewAction(for:)` and `send(…)`.
@@ -107,6 +108,9 @@ The tools are pinned in the `Mintfile`; `mint bootstrap` installs them.
 - Every test and every assertion must be able to fail for a plausible bug in this repository's code. No
   tautologies: don't restate a literal or a one-line computed property, don't test the standard library or a
   dependency, and don't round-trip our own encoder and decoder when fixtures already pin both directions.
+- No overtesting: pin each rule once, at the lowest level that owns it (a parser rule in the parser's tests,
+  not again in the session's and the pinger's). Tests at higher levels check the wiring between parts, not the
+  rules inside them. Every case of a parameterized test must take a different path through the code.
 
 **Style**
 - The file header on every file:
