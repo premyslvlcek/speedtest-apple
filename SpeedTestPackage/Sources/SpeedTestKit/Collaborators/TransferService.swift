@@ -56,5 +56,6 @@ public struct TransferService: Sendable {
 }
 
 public extension DependencyValues {
-    @DependencyEntry var transferService = TransferService()
+    @DependencyEntry(liveValue: TransferService.live)
+    var transferService = TransferService()
 }
