@@ -197,11 +197,11 @@ extension SpeedTest.State {
         case .average:
             String(localized: .tagAverage)
 
-        case .none:
-            nil
-
         case .partialAverage:
             String(localized: .tagPartialAverage)
+
+        case nil:
+            nil
         }
     }
 }

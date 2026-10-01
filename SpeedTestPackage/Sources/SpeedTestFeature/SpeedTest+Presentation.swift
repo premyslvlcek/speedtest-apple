@@ -31,9 +31,11 @@ extension SpeedTest.State {
         case partialAverage
     }
 
+    /// A finished (or stopped) transfer's result. The rows show only results; the big number and the chart carry
+    /// the live value.
     struct SpeedValue: Equatable, Sendable {
         var mbps: Double
-        var tag: ValueTag?
+        var tag: ValueTag
     }
 
     enum ServerValue: Equatable, Sendable {
@@ -140,24 +142,12 @@ extension SpeedTest.State {
     }
 
     var downloadValue: SpeedValue? {
-        if let download {
-            return SpeedValue(mbps: download.averageMbps, tag: download.wasPartial ? .partialAverage : .average)
-        }
-
-        if phase == .downloading, let last = downloadSamples.last {
-            return SpeedValue(mbps: last.currentMbps, tag: nil)
-        }
-
-        return nil
+        download.map { SpeedValue(mbps: $0.averageMbps, tag: $0.wasPartial ? .partialAverage : .average) }
     }
 
     var uploadValue: UploadValue {
         if let upload {
             return .speed(SpeedValue(mbps: upload.averageMbps, tag: upload.wasPartial ? .partialAverage : .average))
-        }
-
-        if phase == .uploading, let last = uploadSamples.last {
-            return .speed(SpeedValue(mbps: last.currentMbps, tag: nil))
         }
 
         if isUploadUnavailable {
