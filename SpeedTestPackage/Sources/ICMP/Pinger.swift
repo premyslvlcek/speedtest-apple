@@ -25,7 +25,7 @@ public actor Pinger {
     private let openSocket: SocketOpener
 
     public init(host: String, clock: any Clock<Duration> = ContinuousClock()) {
-        self.init(host: host, clock: clock, resolve: AddressResolver.resolve, openSocket: LiveICMPSocket.open)
+        self.init(host: host, clock: clock, resolve: AddressResolver.resolve, openSocket: ICMPSocket.live)
     }
 
     init(

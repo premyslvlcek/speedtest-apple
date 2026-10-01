@@ -1,5 +1,5 @@
 //
-//  LiveICMPSocket.swift
+//  ICMPSocketLive.swift
 //  ICMP
 //
 //  Created by Premysl Vlcek on 01.10.2026.
@@ -9,16 +9,20 @@ import Darwin
 import Dispatch
 import Foundation
 
-/// The real socket: an unprivileged ICMP datagram socket, `connect()`ed to one address and read by a
-/// `DispatchSourceRead`.
-enum LiveICMPSocket {
+extension ICMPSocket {
+    /// Why the live socket couldn't be opened, connected or written to, with the `errno` value.
     enum Failure: Error, Equatable {
         case open(Int32)
         case connect(Int32)
         case send(Int32)
     }
 
-    static let open: SocketOpener = { address, onDatagram in
+    /// The real socket: an unprivileged ICMP datagram socket, `connect()`ed to the address and read by a
+    /// `DispatchSourceRead`. Matches `SocketOpener`, so `Pinger` takes it as `ICMPSocket.live`.
+    static func live(
+        connectingTo address: ResolvedAddress,
+        onDatagram: @escaping @Sendable (Data) -> Void
+    ) throws -> ICMPSocket {
         let descriptor: Int32 = switch address.family {
         case .ipv4:
             socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP)
@@ -44,7 +48,7 @@ enum LiveICMPSocket {
 
         guard connected == 0 else {
             let code = errno
-            close(descriptor)
+            Darwin.close(descriptor)
             throw Failure.connect(code)
         }
 
@@ -54,14 +58,14 @@ enum LiveICMPSocket {
 
         guard flags >= 0, fcntl(descriptor, F_SETFL, flags | O_NONBLOCK) == 0 else {
             let code = errno
-            close(descriptor)
+            Darwin.close(descriptor)
             throw Failure.open(code)
         }
 
         // The receive time is taken on this queue, so it runs at the same priority as the rest of a ping.
         let source = DispatchSource.makeReadSource(
             fileDescriptor: descriptor,
-            queue: DispatchQueue(label: "ICMP.LiveICMPSocket", qos: .userInitiated)
+            queue: DispatchQueue(label: "ICMP.ICMPSocket.live", qos: .userInitiated)
         )
 
         source.setEventHandler {
@@ -80,7 +84,7 @@ enum LiveICMPSocket {
         }
 
         source.setCancelHandler {
-            close(descriptor)
+            Darwin.close(descriptor)
         }
 
         source.activate()
