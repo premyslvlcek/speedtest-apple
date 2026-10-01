@@ -88,8 +88,24 @@ public extension EchoMessage {
             expectedType = MessageType.echoReplyV6
         }
 
+        self.init(icmp: icmp, type: expectedType)
+    }
+}
+
+extension EchoMessage {
+    /// Parses an echo request as it goes out: no IP header, type 8 (IPv4) or 128 (IPv6). Only tests need
+    /// it, to read what a pinger sent when they play the remote host.
+    init?(requestData data: Data, family: AddressFamily) {
+        self.init(
+            icmp: [UInt8](data),
+            type: family == .ipv4 ? MessageType.echoRequestV4 : MessageType.echoRequestV6
+        )
+    }
+
+    /// Reads the fields of an ICMP echo message that starts at the first byte, if it has the given type.
+    private init?(icmp: [UInt8], type: UInt8) {
         guard icmp.count >= Field.payload,
-              icmp[Field.type] == expectedType,
+              icmp[Field.type] == type,
               icmp[Field.code] == 0
         else {
             return nil
