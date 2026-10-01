@@ -1,0 +1,101 @@
+[
+  {
+    "url": "https://j4wom-8l-wy39ig2ujzknsf01-7volqzlmamh0zo7cpimt2jg1itd.wifiman.me:80",
+    "latitude": 50.08000183105469,
+    "longitude": 14.420000076293945,
+    "provider": "jablonka.cz",
+    "providerUrl": "http://www.jablonka.cz",
+    "city": "Prague",
+    "country": "Czechia",
+    "countryCode": "CZ",
+    "speedMbps": 1000
+  },
+  {
+    "url": "https://r-f7eg505t2bmpvq7xji8noumuhsjgcxfzijpni06ul6kfcygvarq.wifiman.me:4780",
+    "latitude": 50.08000183105469,
+    "longitude": 14.420000076293945,
+    "provider": "Cznet.cz",
+    "providerUrl": "https://www.cznet.cz/",
+    "city": "Prague",
+    "country": "Czechia",
+    "countryCode": "CZ",
+    "speedMbps": 1000
+  },
+  {
+    "url": "https://vaf0evm1g1d7h82pzqwu-le6gt12vi017q2z56kglo6-pgk4bvc2u.wifiman.me:80",
+    "latitude": 50.0802001953125,
+    "longitude": 14.465200424194336,
+    "provider": "Ubiquiti",
+    "providerUrl": "https://ui.com",
+    "city": "Prague",
+    "country": "Czechia",
+    "countryCode": "CZ",
+    "speedMbps": 1000
+  },
+  {
+    "url": "https://p9tpxjcvxe34s2wztjjmq1no6jqv-z6ap-8m-sai21z21y465y57m.wifiman.me:800",
+    "latitude": 50.08829879760742,
+    "longitude": 14.412400245666504,
+    "provider": "Elektro Solution s.r.o.",
+    "providerUrl": "http://www.elektrosolution.cz",
+    "city": "Zbozicko",
+    "country": "Czechia",
+    "countryCode": "CZ",
+    "speedMbps": 1000
+  },
+  {
+    "url": "https://zwedgsvak0ky6ulf0ta-2axdr0geu1wxv0txz06cqlbzre4fuvv38.wifiman.me:81",
+    "latitude": 50.08599853515625,
+    "longitude": 14.349300384521484,
+    "provider": "Elektro Solution s.r.o.",
+    "providerUrl": "http://www.elektrosolution.cz",
+    "city": "Nove Mesto nad Metuji",
+    "country": "Czechia",
+    "countryCode": "CZ",
+    "speedMbps": 1000
+  },
+  {
+    "url": "https://zwedgsvak0ky6ulf0ta-2axdr0geu1wxv0txz06cqlbzre4fuvv38.wifiman.me:88",
+    "latitude": 50.09833908081055,
+    "longitude": 14.275360107421875,
+    "provider": "Elektro Solution s.r.o.",
+    "providerUrl": "http://www.elektrosolution.cz",
+    "city": "Prague",
+    "country": "Czechia",
+    "countryCode": "CZ",
+    "speedMbps": 1000
+  },
+  {
+    "url": "https://ekg5pq5dtdvm-5qqtlz2iiydv328apb2enqi5pfim35bndvp4yskw.wifiman.me:80",
+    "latitude": 49.78330612182617,
+    "longitude": 13.378915786743164,
+    "provider": "PilsFree",
+    "providerUrl": "http://www.pilsfree.cz/",
+    "city": "Plzen",
+    "country": "Czechia",
+    "countryCode": "CZ",
+    "speedMbps": 10000
+  },
+  {
+    "url": "https://v3u9w0lbgsj-tw9awnykufatrrp6por2qaf2b6q0dpb5kb70jp7ou.wifiman.me:88",
+    "latitude": 49.191898345947266,
+    "longitude": 14.682499885559082,
+    "provider": "SKYLAN.cz",
+    "providerUrl": "http://www.skylan.cz",
+    "city": "Veseli nad Luznici",
+    "country": "Czechia",
+    "countryCode": "CZ",
+    "speedMbps": 1000
+  },
+  {
+    "url": "https://k8v5i2h-inmw-ult0y4uynthm8myhepnoh2bkp2qytah4vc1jvjsc.wifiman.me:8888",
+    "latitude": 48.84980010986328,
+    "longitude": 14.413299560546875,
+    "provider": "PCiNET 08 spol. s r.o.",
+    "providerUrl": "https://internetnajihu.cz",
+    "city": "Mojné",
+    "country": "Czechia",
+    "countryCode": "CZ",
+    "speedMbps": 1000
+  }
+]
