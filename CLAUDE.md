@@ -101,7 +101,8 @@ The tools are pinned in the `Mintfile`; `mint bootstrap` installs them.
 - Swift Testing: `@MainActor @Suite struct XTests`, exhaustive `TestStore`.
 - Dependencies through the `.dependency(…)` and `.dependencies { … }` test traits, or `withDependencies:`.
 - Actions sent and received by key path: `store.send(\.view.startStopTapped)`.
-- `TestClock`/`ImmediateClock` for time, `LockIsolated` for capturing calls.
+- `TestClock`/`ImmediateClock` for time, `LockIsolated` for capturing calls. Tests never assert on wall-clock time
+  and never sleep: control time with a test clock, so a slow machine can't make a test fail or pass.
 - Snapshot tests run locally only (references are recorded on one machine); CI skips them.
 - Every test and every assertion must be able to fail for a plausible bug in this repository's code. No
   tautologies: don't restate a literal or a one-line computed property, don't test the standard library or a
