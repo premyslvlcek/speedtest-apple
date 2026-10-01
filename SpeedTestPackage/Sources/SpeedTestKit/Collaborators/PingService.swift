@@ -17,5 +17,6 @@ public struct PingService: Sendable {
 }
 
 public extension DependencyValues {
-    @DependencyEntry var pingService = PingService()
+    @DependencyEntry(liveValue: PingService.live)
+    var pingService = PingService()
 }
