@@ -31,6 +31,7 @@ mint run swiftformat "${targets[@]}" "${mode[@]}" \
     --languagemode 6 \
     --disable redundantSelf \
     --trailing-commas never \
+    --maxwidth 120 \
     --disable andOperator \
     --disable redundantSwiftTestingSuite,swiftTestingTestCaseNames,blankLinesBetweenImports \
     --enable sortSwitchCases,blankLineAfterSwitchCase
