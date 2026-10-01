@@ -12,7 +12,7 @@ import SpeedTestKit
 import Testing
 import TestSupport
 
-/// The scripted collaborators that previews and the UI tests run on. On an `ImmediateClock` their delays pass at once.
+/// The scripted clients that previews and the UI tests run on. On an `ImmediateClock` their delays pass at once.
 @Suite(.mainSerialExecutor, .timeLimit(.minutes(1))) struct ScriptedTests {
     @Test func scriptedPingsAnswerByHost() async throws {
         let ping = withDependencies {

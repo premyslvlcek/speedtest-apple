@@ -8,7 +8,7 @@
 import Foundation
 import ICMP
 
-/// Sample data for previews, the scripted collaborators and tests. The hosts are fake (`.example.invalid`); the providers
+/// Sample data for previews, the scripted clients and tests. The hosts are fake (`.example.invalid`); the providers
 /// and cities are ones the directory lists near Prague, and the ping pattern mirrors what was measured there:
 /// one server never answers ICMP, and one host is listed twice on different ports.
 public enum Fixtures {

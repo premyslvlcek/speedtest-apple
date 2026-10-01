@@ -5,7 +5,7 @@
 //  Created by Premysl Vlcek on 01.10.2026.
 //
 
-/// A non-2xx answer. Live collaborators throw it; the mapping functions decide what it means.
+/// A non-2xx answer. Live clients throw it; the mapping functions decide what it means.
 public struct HTTPStatusError: Error, Sendable, Equatable {
     public let statusCode: Int
 

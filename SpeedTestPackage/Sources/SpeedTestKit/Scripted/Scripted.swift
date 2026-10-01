@@ -8,7 +8,7 @@
 import Dependencies
 import ICMP
 
-// Scripted collaborators: together they play a whole run in about 5 s with no network, no location prompt and
+// Scripted dependency clients: together they play a whole run in about 5 s with no network, no location prompt and
 // no ICMP. Xcode previews get them as the preview values; the UI tests switch them on at launch. Their delays
 // run on the registered `continuousClock`, resolved when each value is created.
 

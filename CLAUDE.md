@@ -13,7 +13,7 @@ lowest latency. SwiftUI and The Composable Architecture (TCA) on top of a small 
 - `SpeedTest/`: the app target (`@main`, scenes, assets). Kept thin.
 - `SpeedTestPackage/`: all the real code, in five modules.
   - `ICMP`: ICMP echo over unprivileged datagram sockets. No third-party dependencies.
-  - `SpeedTestKit`: the collaborators of a run (dependency clients), the transfer meter and the pure rules (server
+  - `SpeedTestKit`: the dependency clients of a run, the transfer meter and the pure rules (server
     selection, throughput sampling, error mapping). No UI and no TCA.
   - `DesignSystem`: formatting, colors, button and card styles, the speed chart. Takes plain values.
   - `HistoryFeature`: past results in SQLite through SQLiteData, with a reducer and a list.
