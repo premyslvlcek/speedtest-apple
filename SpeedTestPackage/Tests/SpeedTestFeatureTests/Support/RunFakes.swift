@@ -72,4 +72,63 @@ enum RunFakes {
         try? await TestClock().sleep(for: .seconds(1))
         return .noReply(sent: configuration.count)
     })
+
+    /// One measurement per `measure` call, in order, and a record of each call.
+    final class Meter: Sendable {
+        enum Measurement: Sendable {
+            /// Yields the samples, then finishes, or fails with `error`.
+            case samples([ThroughputSample], then: SpeedTestError? = nil)
+            /// Yields the samples, then waits until the effect is cancelled (Stop).
+            case samplesThenWait([ThroughputSample])
+        }
+
+        struct Start: Equatable {
+            let server: Server.ID
+            let direction: TransferDirection
+            let token: String
+        }
+
+        let starts = LockIsolated<[Start]>([])
+        private let measurements: LockIsolated<[Measurement]>
+        /// Keeps the waiting streams open until their consumer goes away.
+        private let open = LockIsolated<[AsyncThrowingStream<ThroughputSample, any Error>.Continuation]>([])
+
+        init(_ measurements: [Measurement]) {
+            self.measurements = LockIsolated(measurements)
+        }
+
+        var client: TransferMeter {
+            TransferMeter(measure: { server, direction, token in
+                self.starts.withValue {
+                    $0.append(Start(server: server.id, direction: direction, token: token.value))
+                }
+                let measurement = self.measurements.withValue { $0.isEmpty ? .samples([]) : $0.removeFirst() }
+                let (stream, continuation) = AsyncThrowingStream.makeStream(
+                    of: ThroughputSample.self,
+                    throwing: (any Error).self
+                )
+                switch measurement {
+                case let .samples(samples, error):
+                    samples.forEach { continuation.yield($0) }
+                    continuation.finish(throwing: error)
+
+                case let .samplesThenWait(samples):
+                    samples.forEach { continuation.yield($0) }
+                    self.open.withValue { $0.append(continuation) }
+                }
+                return stream
+            })
+        }
+    }
+
+    /// Short transfers: two download samples and one upload sample. 12.5 MB in 0.25 s is 400 Mbps.
+    static let download1 = ThroughputSample(
+        elapsed: .milliseconds(250), totalBytes: 12_500_000, currentMbps: 400, averageMbps: 400
+    )
+    static let download2 = ThroughputSample(
+        elapsed: .milliseconds(500), totalBytes: 28_750_000, currentMbps: 520, averageMbps: 460
+    )
+    static let upload1 = ThroughputSample(
+        elapsed: .milliseconds(250), totalBytes: 2_875_000, currentMbps: 92, averageMbps: 92
+    )
 }

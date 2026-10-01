@@ -73,6 +73,9 @@ public struct SpeedTest: Sendable {
         case serversResponse(Result<[Server], any Error>)
         case pinged(host: String, PingResult)
         case tokenResponse(Result<TransferToken, any Error>)
+        case sampled(TransferDirection, ThroughputSample)
+        /// A measurement's stream finished (`.success`) or failed.
+        case transferResponse(TransferDirection, Result<Void, any Error>)
         case view(View)
 
         @CasePathable
@@ -90,6 +93,7 @@ public struct SpeedTest: Sendable {
     @Dependency(\.openURL) var openURL
     @Dependency(\.pingService) var pingService
     @Dependency(\.serverDirectory) var serverDirectory
+    @Dependency(\.transferMeter) var transferMeter
 
     public init() {}
 
@@ -116,6 +120,27 @@ public struct SpeedTest: Sendable {
 
             case let .tokenResponse(.success(token)):
                 state.token = token
+
+                return measureDownload(state: state)
+
+            case let .sampled(direction, sample):
+                state.record(sample, direction)
+
+                return .none
+
+            case .transferResponse(.download, .success):
+                return downloadFinished(state: &state)
+
+            case let .transferResponse(.download, .failure(error)):
+                return downloadFailed(error, state: &state)
+
+            case .transferResponse(.upload, .success):
+                state.finishUpload()
+
+                return .none
+
+            case let .transferResponse(.upload, .failure(error)):
+                state.uploadFailed(error)
 
                 return .none
 

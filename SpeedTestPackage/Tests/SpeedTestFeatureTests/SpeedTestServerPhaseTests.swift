@@ -28,6 +28,8 @@ import TestSupport
             $0.locator = RunFakes.locator()
             $0.serverDirectory = directory.client
             $0.pingService = pings.client
+            // The run goes on to measure; these tests stop it there.
+            $0.transferMeter = RunFakes.Meter([.samplesThenWait([])]).client
         }
         let candidates = Fixtures.candidates
         var pinged = IdentifiedArray(uniqueElements: candidates)
@@ -74,6 +76,9 @@ import TestSupport
         await store.receive(\.tokenResponse.success) {
             $0.token = RunFakes.token
         }
+        await store.send(\.view.startStopTapped) {
+            $0.phase = .interrupted(.stopped)
+        }
 
         #expect(store.state.selection?.server.provider == "Elektro Solution")
         #expect(store.state.selection?.server.port == 81)
@@ -91,6 +96,8 @@ import TestSupport
             $0.locator = RunFakes.locator(.notAuthorized)
             $0.serverDirectory = directory.client
             $0.pingService = RunFakes.Pings().client
+            // The run goes on to measure; these tests stop it there.
+            $0.transferMeter = RunFakes.Meter([.samplesThenWait([])]).client
         }
 
         await store.send(\.view.startStopTapped) {
@@ -115,6 +122,9 @@ import TestSupport
         await store.receive(\.tokenResponse.success) {
             $0.token = RunFakes.token
         }
+        await store.send(\.view.startStopTapped) {
+            $0.phase = .interrupted(.stopped)
+        }
 
         #expect(directory.fetchedNear.value == [nil])
     }
@@ -127,6 +137,8 @@ import TestSupport
             $0.locator = RunFakes.locator()
             $0.serverDirectory = RunFakes.Directory(servers: .success([server])).client
             $0.pingService = RunFakes.Pings().client
+            // The run goes on to measure; these tests stop it there.
+            $0.transferMeter = RunFakes.Meter([.samplesThenWait([])]).client
         }
         store.exhaustivity = .off
 
@@ -135,6 +147,7 @@ import TestSupport
 
         #expect(store.state.selection?.reason == .icmpBlocked)
         #expect(store.state.selection?.ping == .noReply(sent: 5))
+        await store.send(\.view.startStopTapped)
     }
 
     @Test func anEmptyDirectoryFails() async {

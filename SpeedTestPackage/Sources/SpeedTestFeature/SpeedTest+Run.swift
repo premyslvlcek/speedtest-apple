@@ -96,6 +96,64 @@ extension SpeedTest {
         .cancellable(id: SpeedTestId())
     }
 
+    /// Measures the download on the selected server with the run's token.
+    func measureDownload(state: State) -> Effect<Action> {
+        guard let server = state.selection?.server, let token = state.token else {
+            return .none
+        }
+
+        return measure(.download, on: server, token: token)
+    }
+
+    /// The download finished: the upload follows on the same server, with the same token.
+    func downloadFinished(state: inout State) -> Effect<Action> {
+        guard let last = state.downloadSamples.last, let server = state.selection?.server, let token = state.token
+        else {
+            state.phase = .failed(.transferFailed)
+
+            return .none
+        }
+
+        state.download = TransferResult(lastSample: last, wasPartial: false)
+        state.phase = .connecting(.upload)
+
+        return measure(.upload, on: server, token: token)
+    }
+
+    /// A download that never started fails over once, to another host if there is one. An offline device, a second
+    /// failure or an interruption ends the run.
+    func downloadFailed(_ error: any Error, state: inout State) -> Effect<Action> {
+        guard let error = SpeedTestError.mapping(error) else {
+            return .none
+        }
+        guard error == .transferFailed, !state.hasFailedOver,
+              let failed = state.order.first(where: { $0.server == state.selection?.server }),
+              let target = ServerSelector.failoverTarget(after: failed, in: state.order)
+        else {
+            state.end(with: error)
+
+            return .none
+        }
+
+        state.select(target, reason: .failover)
+        state.hasFailedOver = true
+
+        return measureDownload(state: state)
+    }
+
+    /// One measurement: a `sampled` action per sample, then `transferResponse` when the stream ends.
+    private func measure(_ direction: TransferDirection, on server: Server, token: TransferToken) -> Effect<Action> {
+        .run { send in
+            for try await sample in transferMeter.measure(server, direction, token) {
+                await send(.sampled(direction, sample))
+            }
+            await send(.transferResponse(direction, .success(())))
+        } catch: { error, send in
+            await send(.transferResponse(direction, .failure(error)))
+        }
+        .cancellable(id: SpeedTestId())
+    }
+
     /// Going to the background stops a run on iOS only. `.inactive` never does: Control Center and the location
     /// prompt both make the scene inactive.
     func scenePhaseChanged(_ scenePhase: ScenePhase, state: inout State) -> Effect<Action> {
