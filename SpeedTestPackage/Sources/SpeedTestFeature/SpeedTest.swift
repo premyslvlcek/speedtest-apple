@@ -26,6 +26,9 @@ public struct SpeedTest: Sendable {
         public var download: TransferResult?
         public var upload: TransferResult?
         public var isUploadUnavailable = false
+        /// Whether a run measures upload after the download. Off by default: the test is the 15 s download.
+        /// Remembered across launches.
+        @Shared(.appStorage("measuresUpload")) public var measuresUpload = false
         /// The fallback order, set once every host has answered.
         var order: [Candidate] = []
         /// Fetched once per run, right before the download.
@@ -84,6 +87,7 @@ public struct SpeedTest: Sendable {
             case retryTapped
             case scenePhaseChanged(ScenePhase)
             case startStopTapped
+            case uploadToggled(Bool)
         }
     }
 
@@ -154,6 +158,15 @@ public struct SpeedTest: Sendable {
 
             case let .view(.scenePhaseChanged(scenePhase)):
                 return scenePhaseChanged(scenePhase, state: &state)
+
+            case let .view(.uploadToggled(isOn)):
+                guard !state.isRunning else {
+                    return .none
+                }
+
+                state.$measuresUpload.withLock { $0 = isOn }
+
+                return .none
 
             case .view(.startStopTapped):
                 guard state.isRunning else {

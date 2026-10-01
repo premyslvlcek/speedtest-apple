@@ -769,6 +769,42 @@
         }
       }
     },
+    "settings.measureUpload" : {
+      "comment" : "Switch that adds an upload measurement after the download.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Měřit i odesílání"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Measure upload too"
+          }
+        }
+      }
+    },
+    "settings.measureUploadFootnote" : {
+      "comment" : "Explains the upload switch.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Po 15s stahování přidá 10s test odesílání."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adds a 10 s upload test after the 15 s download."
+          }
+        }
+      }
+    },
     "tag.average" : {
       "comment" : "Tag next to a speed that is a transfer's average.",
       "extractionState" : "manual",

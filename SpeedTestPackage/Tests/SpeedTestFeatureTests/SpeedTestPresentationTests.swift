@@ -40,7 +40,7 @@ import Testing
         #expect(!state.showsIntroduction)
     }
 
-    @Test func downloadingShowsTheLiveValue() throws {
+    @Test func downloadingShowsTheLiveNumber() throws {
         let state = SpeedTest.State.downloadingFixture
         let last = try #require(state.downloadSamples.last)
         let selection = try #require(state.selection)
@@ -49,7 +49,8 @@ import Testing
 
         #expect(state.phaseLabel == .downloading(seconds: last.elapsed.inSeconds))
         #expect(state.bigNumber == last.currentMbps)
-        #expect(state.downloadValue == .init(mbps: last.currentMbps, tag: nil))
+        // The row waits for the result; the big number carries the live value.
+        #expect(state.downloadValue == nil)
         #expect(state.serverValue == .server(name: selection.server.name))
         #expect(state.pingValue == .result(
             milliseconds: median.inMilliseconds, received: ping.received, sent: ping.sent
@@ -58,7 +59,7 @@ import Testing
         #expect(state.buttonTitle == .stop)
     }
 
-    @Test func uploadingShowsTheLiveUpload() throws {
+    @Test func uploadingShowsTheLiveNumber() throws {
         var state = SpeedTest.State.finishedFixture
         state.upload = nil
         state.uploadSamples = Array(SpeedTest.State.uploadSeries.prefix(8))
@@ -68,7 +69,7 @@ import Testing
         #expect(state.phaseLabel == .uploading(seconds: last.elapsed.inSeconds))
         #expect(state.bigNumber == last.currentMbps)
         #expect(state.downloadValue?.tag == .average)
-        #expect(state.uploadValue == .speed(.init(mbps: last.currentMbps, tag: nil)))
+        #expect(state.uploadValue == .none)
     }
 
     @Test func finishedShowsTheDownloadAverage() throws {
@@ -160,5 +161,17 @@ import Testing
         state.isUploadUnavailable = true
 
         #expect(state.uploadValue == .unavailable)
+    }
+
+    /// The label's elapsed time is swapped frame by frame while it counts; every other part must stay.
+    @Test(arguments: [
+        (SpeedTest.State.PhaseLabel.downloading(seconds: 7.25), SpeedTest.State.PhaseLabel.downloading(seconds: 7.4)),
+        (.uploading(seconds: 2.5), .uploading(seconds: 7.4)),
+        (.stopped(atSeconds: 3), .stopped(atSeconds: 7.4)),
+        (.stopped(atSeconds: nil), .stopped(atSeconds: nil)),
+        (.ready, .ready)
+    ])
+    func aLabelTakesAnotherElapsedTime(label: SpeedTest.State.PhaseLabel, expected: SpeedTest.State.PhaseLabel) {
+        #expect(label.withSeconds(7.4) == expected)
     }
 }

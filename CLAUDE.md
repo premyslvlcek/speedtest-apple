@@ -104,6 +104,8 @@ The tools are pinned in the `Mintfile`; `mint bootstrap` installs them.
 
 **Views**
 - `@Bindable public var store` with `@ViewAction(for:)` and `send(…)`.
+- Child views take the store (or a scoped store) and read through it, never a copy of `store.state`: observation
+  tracks what is read through the store, so a copy stops updating (the live number froze that way).
 - `@State` only for plain view-local values, with the initial value at the declaration and never assigned in an
   `init` (in the iOS 27 SDK `@State` is a macro and that pattern doesn't compile).
 - Sub-views as `private var x: some View` or small structs; `#Preview` for previews.

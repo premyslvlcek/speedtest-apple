@@ -31,9 +31,11 @@ extension SpeedTest.State {
         case partialAverage
     }
 
+    /// A finished (or stopped) transfer's result. The rows show only results; the big number and the chart carry
+    /// the live value.
     struct SpeedValue: Equatable, Sendable {
         var mbps: Double
-        var tag: ValueTag?
+        var tag: ValueTag
     }
 
     enum ServerValue: Equatable, Sendable {
@@ -140,24 +142,12 @@ extension SpeedTest.State {
     }
 
     var downloadValue: SpeedValue? {
-        if let download {
-            return SpeedValue(mbps: download.averageMbps, tag: download.wasPartial ? .partialAverage : .average)
-        }
-
-        if phase == .downloading, let last = downloadSamples.last {
-            return SpeedValue(mbps: last.currentMbps, tag: nil)
-        }
-
-        return nil
+        download.map { SpeedValue(mbps: $0.averageMbps, tag: $0.wasPartial ? .partialAverage : .average) }
     }
 
     var uploadValue: UploadValue {
         if let upload {
             return .speed(SpeedValue(mbps: upload.averageMbps, tag: upload.wasPartial ? .partialAverage : .average))
-        }
-
-        if phase == .uploading, let last = uploadSamples.last {
-            return .speed(SpeedValue(mbps: last.currentMbps, tag: nil))
         }
 
         if isUploadUnavailable {
@@ -233,6 +223,41 @@ extension SpeedTest.State {
         }
 
         return .stopped(atSeconds: downloadSamples.last?.elapsed.inSeconds)
+    }
+}
+
+extension SpeedTest.State.PhaseLabel {
+    /// The elapsed time a label shows, if it shows one.
+    var seconds: Double? {
+        switch self {
+        case let .downloading(seconds), let .uploading(seconds):
+            seconds
+
+        case let .stopped(atSeconds: seconds):
+            seconds
+
+        case .connecting, .downloadAverage, .failed, .findingServers, .interrupted, .locating, .pinging, .ready,
+             .stoppedAfterDownload:
+            nil
+        }
+    }
+
+    /// The same label with another elapsed time, for drawing the in-between frames of a count.
+    func withSeconds(_ seconds: Double) -> Self {
+        switch self {
+        case .downloading:
+            .downloading(seconds: seconds)
+
+        case .uploading:
+            .uploading(seconds: seconds)
+
+        case .stopped(atSeconds: .some):
+            .stopped(atSeconds: seconds)
+
+        case .connecting, .downloadAverage, .failed, .findingServers, .interrupted, .locating, .pinging, .ready,
+             .stopped(atSeconds: .none), .stoppedAfterDownload:
+            self
+        }
     }
 }
 
