@@ -14,9 +14,22 @@
 		AACB8411306DD29900C0A25E /* SpeedTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SpeedTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		AA51A0C1306DD29900C0A25E /* Exceptions for "SpeedTest" folder in "SpeedTest" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = AACB8410306DD29900C0A25E /* SpeedTest */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		AACB8413306DD29900C0A25E /* SpeedTest */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				AA51A0C1306DD29900C0A25E /* Exceptions for "SpeedTest" folder in "SpeedTest" target */,
+			);
 			path = SpeedTest;
 			sourceTree = "<group>";
 		};
@@ -265,8 +278,6 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Speed Test";
-				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
-				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
@@ -294,6 +305,12 @@
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				XROS_DEPLOYMENT_TARGET = 26.5;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Speed Test sends your approximate location to the speed test server directory to find the servers closest to you.";
+				INFOPLIST_KEY_NSLocationUsageDescription = "Speed Test sends your approximate location to the speed test server directory to find the servers closest to you.";
+				INFOPLIST_FILE = SpeedTest/Info.plist;
+				"ENABLE_APP_SANDBOX[sdk=macosx*]" = YES;
+				"ENABLE_OUTGOING_NETWORK_CONNECTIONS[sdk=macosx*]" = YES;
+				"ENABLE_RESOURCE_ACCESS_LOCATION[sdk=macosx*]" = YES;
 			};
 			name = Debug;
 		};
@@ -311,8 +328,6 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Speed Test";
-				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
-				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
@@ -340,6 +355,12 @@
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				XROS_DEPLOYMENT_TARGET = 26.5;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Speed Test sends your approximate location to the speed test server directory to find the servers closest to you.";
+				INFOPLIST_KEY_NSLocationUsageDescription = "Speed Test sends your approximate location to the speed test server directory to find the servers closest to you.";
+				INFOPLIST_FILE = SpeedTest/Info.plist;
+				"ENABLE_APP_SANDBOX[sdk=macosx*]" = YES;
+				"ENABLE_OUTGOING_NETWORK_CONNECTIONS[sdk=macosx*]" = YES;
+				"ENABLE_RESOURCE_ACCESS_LOCATION[sdk=macosx*]" = YES;
 			};
 			name = Release;
 		};

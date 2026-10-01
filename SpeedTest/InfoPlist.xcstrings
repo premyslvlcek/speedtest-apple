@@ -29,6 +29,40 @@
           }
         }
       }
+    },
+    "NSLocationUsageDescription" : {
+      "comment" : "Why the app asks for location access (macOS permission prompt).",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Test rychlosti posílá vaši přibližnou polohu do seznamu testovacích serverů, aby našel servery, které jsou vám nejblíž."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speed Test sends your approximate location to the speed test server directory to find the servers closest to you."
+          }
+        }
+      }
+    },
+    "NSLocationWhenInUseUsageDescription" : {
+      "comment" : "Why the app asks for location access (iOS permission prompt).",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Test rychlosti posílá vaši přibližnou polohu do seznamu testovacích serverů, aby našel servery, které jsou vám nejblíž."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speed Test sends your approximate location to the speed test server directory to find the servers closest to you."
+          }
+        }
+      }
     }
   },
   "version" : "1.1"
