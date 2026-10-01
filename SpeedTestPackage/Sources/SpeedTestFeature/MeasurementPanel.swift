@@ -5,19 +5,22 @@
 //  Created by Premysl Vlcek on 01.10.2026.
 //
 
+import ComposableArchitecture
 import DesignSystem
 import SwiftUI
 
 /// Phase label, big number, the four result fields and the inline notes.
 struct MeasurementPanel: View {
-    let state: SpeedTest.State
+    /// Read through the store, not a copy of its state: every value read here is observed, so each new sample
+    /// redraws the live number and the elapsed time.
+    let store: StoreOf<SpeedTest>
     let onOpenSettings: () -> Void
 
     @ScaledMetric(relativeTo: .largeTitle) private var bigNumberSize: CGFloat = 64
 
     var body: some View {
         VStack(spacing: 14) {
-            ForEach(state.notes.filter { $0 != .icmpBlocked }, id: \.self) { note in
+            ForEach(store.notes.filter { $0 != .icmpBlocked }, id: \.self) { note in
                 NoteView(note: note, onOpenSettings: onOpenSettings)
             }
 
@@ -26,41 +29,41 @@ struct MeasurementPanel: View {
             ResultCard {
                 ResultRow(
                     title: Text(.fieldServer),
-                    value: state.serverString,
+                    value: store.serverString,
                     accessibilityIdentifier: "serverField"
                 )
                 Divider()
                 ResultRow(
                     title: Text(.fieldPing),
-                    value: state.pingString,
+                    value: store.pingString,
                     accessibilityIdentifier: "pingField"
                 )
                 Divider()
                 ResultRow(
                     title: Text(.fieldDownload),
-                    value: state.downloadString,
-                    tag: state.downloadTag,
+                    value: store.downloadString,
+                    tag: store.downloadTag,
                     accessibilityIdentifier: "downloadField"
                 )
                 Divider()
                 ResultRow(
                     title: Text(.fieldUpload),
-                    value: state.uploadString,
-                    tag: state.uploadTag,
+                    value: store.uploadString,
+                    tag: store.uploadTag,
                     isSecondary: true,
                     accessibilityIdentifier: "uploadField"
                 )
             }
 
-            if state.notes.contains(.icmpBlocked) {
+            if store.notes.contains(.icmpBlocked) {
                 NoteView(note: .icmpBlocked, onOpenSettings: onOpenSettings)
             }
 
-            if let failure = state.failure {
+            if let failure = store.failure {
                 MessageView(text: failure.message, systemImage: "exclamationmark.triangle", tint: Palette.error)
             }
 
-            if state.showsIntroduction {
+            if store.showsIntroduction {
                 Text(.intro)
                     .font(.footnote)
                     .foregroundStyle(Palette.secondaryText)
@@ -73,7 +76,7 @@ struct MeasurementPanel: View {
 
     private var header: some View {
         VStack(spacing: 2) {
-            state.phaseLabel.text
+            store.phaseLabel.text
                 .font(.footnote.weight(.semibold))
                 .textCase(.uppercase)
                 .foregroundStyle(Palette.secondaryText)
@@ -81,7 +84,7 @@ struct MeasurementPanel: View {
                 .accessibilityIdentifier("phaseLabel")
 
             HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Text(verbatim: SpeedFormat.mbps(state.bigNumber))
+                Text(verbatim: SpeedFormat.mbps(store.bigNumber))
                     .font(.system(size: bigNumberSize, weight: .bold, design: .rounded))
                     .monospacedDigit()
                     .contentTransition(.numericText())
@@ -93,7 +96,7 @@ struct MeasurementPanel: View {
                     .foregroundStyle(Palette.secondaryText)
             }
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel(state.phaseLabel.text)
+            .accessibilityLabel(store.phaseLabel.text)
             .accessibilityValue(bigNumberAccessibilityValue)
             .accessibilityAddTraits(.updatesFrequently)
             .accessibilityIdentifier("bigNumber")
@@ -102,7 +105,7 @@ struct MeasurementPanel: View {
 
     /// Read quietly while it changes 4 times a second; the view announces the final value once.
     private var bigNumberAccessibilityValue: Text {
-        guard let value = state.bigNumber else {
+        guard let value = store.bigNumber else {
             return Text(.accessibilityNoValue)
         }
 

@@ -26,7 +26,7 @@ public struct SpeedTestView: View {
     public var body: some View {
         List {
             Section {
-                MeasurementPanel(state: store.state) {
+                MeasurementPanel(store: store) {
                     send(.openSettingsTapped)
                 }
                 .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
