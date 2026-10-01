@@ -24,6 +24,10 @@ public actor Pinger {
     private let resolve: @Sendable (String) async -> ResolvedAddress?
     private let openSocket: SocketOpener
 
+    public init(host: String, clock: any Clock<Duration> = ContinuousClock()) {
+        self.init(host: host, clock: clock, resolve: AddressResolver.resolve, openSocket: LiveICMPSocket.open)
+    }
+
     init(
         host: String,
         clock: any Clock<Duration>,

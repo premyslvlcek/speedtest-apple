@@ -18,6 +18,7 @@ struct ResolvedAddress: Sendable, Equatable {
 /// a fake that answers synchronously.
 struct ICMPSocket: Sendable {
     var send: @Sendable (Data) throws -> Void
+    /// Closes the socket. Nothing may be sent after this.
     var close: @Sendable () -> Void
 }
 
