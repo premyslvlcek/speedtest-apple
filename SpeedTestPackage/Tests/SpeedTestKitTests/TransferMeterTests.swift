@@ -7,12 +7,13 @@
 
 import Clocks
 import Testing
+import TestSupport
 
 @testable import SpeedTestKit
 
 /// With an `ImmediateClock` every sleep returns at once and moves the clock by exactly its duration, and the
 /// fake transfer returns `bytesPerRead × n` on its n-th read, so every sample is known in advance.
-@Suite(.timeLimit(.minutes(1))) struct TransferMeterTests {
+@Suite(.mainSerialExecutor, .timeLimit(.minutes(1))) struct TransferMeterTests {
     /// 1.25 MB per 250 ms tick is 40 Mbps.
     let bytesPerRead: Int64 = 1_250_000
     let interval = SpeedTestConfiguration.standard.sampleInterval

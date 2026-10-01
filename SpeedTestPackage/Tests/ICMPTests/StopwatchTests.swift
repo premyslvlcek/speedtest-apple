@@ -8,8 +8,9 @@
 import Clocks
 @testable import ICMP
 import Testing
+import TestSupport
 
-@Suite struct StopwatchTests {
+@Suite(.mainSerialExecutor) struct StopwatchTests {
     @Test func measuresElapsedTimeOnTheGivenClock() async {
         let clock = TestClock()
         let stopwatch = Stopwatch(clock: clock)

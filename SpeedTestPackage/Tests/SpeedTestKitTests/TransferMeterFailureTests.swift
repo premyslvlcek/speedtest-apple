@@ -9,9 +9,10 @@ import Clocks
 import Foundation
 import SpeedTestKit
 import Testing
+import TestSupport
 
 /// Every test reads the stream in its own body, so the time limit can cancel a test that hangs.
-@Suite(.timeLimit(.minutes(1))) struct TransferMeterFailureTests {
+@Suite(.mainSerialExecutor, .timeLimit(.minutes(1))) struct TransferMeterFailureTests {
     // MARK: - Before the first byte
 
     /// A non-2xx answer and a TLS failure: the two ways a server can fail before the first byte.

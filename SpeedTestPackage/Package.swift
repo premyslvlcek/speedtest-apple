@@ -78,14 +78,20 @@ let package = Package(
             resources: [.process("Resources")],
             swiftSettings: swiftSettings
         ),
+        .target(
+            name: "TestSupport",
+            dependencies: [concurrencyExtras],
+            path: "Tests/TestSupport",
+            swiftSettings: swiftSettings
+        ),
         .testTarget(
             name: "ICMPTests",
-            dependencies: ["ICMP", clocks],
+            dependencies: ["ICMP", "TestSupport", clocks],
             swiftSettings: swiftSettings
         ),
         .testTarget(
             name: "SpeedTestKitTests",
-            dependencies: ["SpeedTestKit", "ICMP", clocks, concurrencyExtras, dependenciesTestSupport],
+            dependencies: ["SpeedTestKit", "ICMP", "TestSupport", clocks, concurrencyExtras, dependenciesTestSupport],
             resources: [.copy("Fixtures")],
             swiftSettings: swiftSettings
         ),

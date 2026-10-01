@@ -110,12 +110,13 @@ The tools are pinned in the `Mintfile`; `mint bootstrap` installs them.
 - A test awaits what it started in its own body (iterate the stream there, or use a task group), never a
   `Task { … }` it then awaits with `.value`: a time limit cancels the test's task, not an unstructured one, so such a
   test hangs instead of failing.
-- `withMainSerialExecutor` only where a test must control how tasks interleave, such as asserting what the code
-  under test does between two `TestClock.advance` calls, and then only in a `.serialized` suite: it flips a
-  process-wide switch and restores the previous value on exit, so overlapping uses turn it off under each other.
-  Not needed with `ImmediateClock`, in a test that waits on an observable event (a fake's stream, a subscription),
-  or with `TestStore`, which turns it on itself. `TestClock` always wakes sleepers on time, so a rule about late
-  wake-ups is tested as a pure function.
+- A suite that uses `TestClock` or `ImmediateClock` gets the `.mainSerialExecutor` trait (`TestSupport`), Point-Free's
+  recommended way to test async code: every task runs in order on the main executor, so the clocks' yields can't be
+  starved on a busy CI machine. Use the trait, not `withMainSerialExecutor` directly: the switch is process-wide, and
+  the trait keeps it on until the last test using it has finished. A suite that creates a `TestStore` gets the trait
+  too: a `TestStore` turns the switch on and, when released, puts back what it found, which could switch it off
+  under another suite. `TestClock` wakes sleepers on time, so a rule about late wake-ups is tested as a pure
+  function.
 - Snapshot tests run locally only (references are recorded on one machine); CI skips them.
 - Every test and every assertion must be able to fail for a plausible bug in this repository's code. No
   tautologies: don't restate a literal or a one-line computed property, don't test the standard library or a

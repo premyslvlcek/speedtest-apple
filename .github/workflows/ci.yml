@@ -60,11 +60,6 @@ jobs:
             ios-destination: platform=iOS Simulator,name=iPhone 17,OS=27.0
     env:
       IOS_DESTINATION: ${{ matrix.ios-destination }}
-      # swift-clocks' ImmediateClock and TestClock yield through background-priority tasks (Task.megaYield).
-      # A busy CI machine can starve those for over a minute, so tests time out. Zero turns the yields off;
-      # the TEST_RUNNER_ prefix passes the setting to tests running in the simulator.
-      TASK_MEGA_YIELD_COUNT: "0"
-      TEST_RUNNER_TASK_MEGA_YIELD_COUNT: "0"
     steps:
       - uses: actions/checkout@v4
 

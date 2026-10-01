@@ -10,8 +10,9 @@ import Foundation
 @testable import ICMP
 import os
 import Testing
+import TestSupport
 
-@Suite(.timeLimit(.minutes(1))) struct PingerTests {
+@Suite(.mainSerialExecutor, .timeLimit(.minutes(1))) struct PingerTests {
     static let address = ResolvedAddress(family: .ipv6, sockaddr: Data())
 
     /// A socket that answers inside `send`, like a network with zero latency. `answer` decides per request

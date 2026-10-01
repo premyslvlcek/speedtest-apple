@@ -7,10 +7,11 @@
 
 import Clocks
 import Testing
+import TestSupport
 
 @testable import SpeedTestKit
 
-@Suite struct StopwatchTests {
+@Suite(.mainSerialExecutor) struct StopwatchTests {
     @Test func measuresOnTheInjectedClock() async {
         let clock = TestClock()
         let stopwatch = Stopwatch(clock: clock)
