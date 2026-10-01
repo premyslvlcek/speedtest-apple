@@ -107,6 +107,15 @@ The tools are pinned in the `Mintfile`; `mint bootstrap` installs them.
 - Actions sent and received by key path: `store.send(\.view.startStopTapped)`.
 - `TestClock`/`ImmediateClock` for time, `LockIsolated` for capturing calls. Tests never assert on wall-clock time
   and never sleep: control time with a test clock, so a slow machine can't make a test fail or pass.
+- A test awaits what it started in its own body (iterate the stream there, or use a task group), never a
+  `Task { … }` it then awaits with `.value`: a time limit cancels the test's task, not an unstructured one, so such a
+  test hangs instead of failing.
+- `withMainSerialExecutor` only where a test must control how tasks interleave, such as asserting what the code
+  under test does between two `TestClock.advance` calls, and then only in a `.serialized` suite: it flips a
+  process-wide switch and restores the previous value on exit, so overlapping uses turn it off under each other.
+  Not needed with `ImmediateClock`, in a test that waits on an observable event (a fake's stream, a subscription),
+  or with `TestStore`, which turns it on itself. `TestClock` always wakes sleepers on time, so a rule about late
+  wake-ups is tested as a pure function.
 - Snapshot tests run locally only (references are recorded on one machine); CI skips them.
 - Every test and every assertion must be able to fail for a plausible bug in this repository's code. No
   tautologies: don't restate a literal or a one-line computed property, don't test the standard library or a

@@ -59,13 +59,23 @@ struct TransferMeasurement: Sendable {
                 try await measure(on: server, direction, token: token) { continuation.yield($0) }
                 continuation.finish()
             } catch {
-                continuation.finish(throwing: Task.isCancelled ? nil : SpeedTestError.mapping(error))
+                continuation.finish(throwing: Task.isCancelled ? nil : Self.mapping(error))
             }
         }
         continuation.onTermination = { _ in
             measurement.cancel()
         }
         return stream
+    }
+
+    /// A failed start is mapped by its connection's error, so an offline device is `.offline` and any other failure
+    /// `.transferFailed`. A stall, like every error that isn't a `URLError`, maps to `.transferFailed`; after t0 the
+    /// error is already a `SpeedTestError`.
+    static func mapping(_ error: any Error) -> SpeedTestError? {
+        if case let TransferStartFailure.failed(connectionError) = error {
+            return SpeedTestError.mapping(connectionError)
+        }
+        return SpeedTestError.mapping(error)
     }
 
     /// t0 is the first byte; a sample every `sampleInterval` after it, the last one at exactly t0 + the duration.
@@ -86,7 +96,39 @@ struct TransferMeasurement: Sendable {
         case .upload:
             configuration.uploadDuration
         }
-        try await tick(handle, stopwatch: Stopwatch(clock: clock), for: duration, onSample: onSample)
+        try await sample(handle, for: duration, onSample: onSample)
+    }
+
+    /// Samples from t0 while watching the network. The watch starts here, at the first byte, so only a change
+    /// during the transfer counts.
+    private func sample(
+        _ handle: TransferHandle,
+        for duration: Duration,
+        onSample: @escaping @Sendable (ThroughputSample) -> Void
+    ) async throws {
+        let stopwatch = Stopwatch(clock: clock)
+        let changes = network.interfaceChanges()
+
+        try await withThrowingTaskGroup(of: Bool.self) { group in
+            group.addTask {
+                for await _ in changes {
+                    throw SpeedTestError.networkChanged
+                }
+                // The monitor stopped without a change: let the sampling finish alone.
+                return false
+            }
+            group.addTask {
+                try await tick(handle, stopwatch: stopwatch, for: duration, onSample: onSample)
+                return true
+            }
+
+            while let isFinished = try await group.next() {
+                if isFinished {
+                    group.cancelAll()
+                    return
+                }
+            }
+        }
     }
 
     /// Waits for the first byte, for at most `stallTimeout`. When the time runs out it cancels the handle,
@@ -136,6 +178,7 @@ struct TransferMeasurement: Sendable {
                 try await clock.sleep(for: wait)
             }
             try Task.checkCancellation()
+            guard handle.isAlive() else { throw SpeedTestError.connectionLost }
 
             let wakeUp = schedule.wake(at: stopwatch.elapsed())
             onSample(sampler.add(elapsed: wakeUp.elapsed, totalBytes: handle.totalBytes()))
