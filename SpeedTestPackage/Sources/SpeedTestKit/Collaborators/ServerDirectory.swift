@@ -22,6 +22,9 @@ public struct ServerDirectory: Sendable {
 }
 
 public extension DependencyValues {
-    @DependencyEntry(liveValue: ServerDirectory.live(timeout: SpeedTestConfiguration.standard.directoryTimeout))
+    @DependencyEntry(
+        liveValue: ServerDirectory.live(timeout: SpeedTestConfiguration.standard.directoryTimeout),
+        previewValue: ServerDirectory.scripted
+    )
     var serverDirectory = ServerDirectory()
 }

@@ -19,6 +19,6 @@ public struct TransferMeter: Sendable {
 }
 
 public extension DependencyValues {
-    @DependencyEntry(liveValue: TransferMeter.live)
+    @DependencyEntry(liveValue: TransferMeter.live, previewValue: TransferMeter.scripted)
     var transferMeter = TransferMeter()
 }
