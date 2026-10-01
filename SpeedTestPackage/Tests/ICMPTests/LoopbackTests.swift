@@ -15,18 +15,6 @@ import Testing
         #expect(await AddressResolver.resolve("::1")?.family == .ipv6)
     }
 
-    @Test func pingsIPv4Loopback() async {
-        let result = await Pinger(host: "127.0.0.1").ping()
-
-        #expect(result.received == 5)
-    }
-
-    @Test func pingsIPv6Loopback() async {
-        let result = await Pinger(host: "::1").ping()
-
-        #expect(result.received == 5)
-    }
-
     @Test func threePingersAtOnceEachGetAllTheirReplies() async {
         async let ipv4 = Pinger(host: "127.0.0.1").ping()
         async let ipv6 = Pinger(host: "::1").ping()
