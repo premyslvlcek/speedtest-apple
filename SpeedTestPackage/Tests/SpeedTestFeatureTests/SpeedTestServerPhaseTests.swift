@@ -299,6 +299,26 @@ import TestSupport
         #expect(directory.fetchedNear.value.count == 2)
     }
 
+    @Test func theUploadSwitchChangesTheRememberedSetting() async {
+        let store = TestStore(initialState: SpeedTest.State()) {
+            SpeedTest()
+        }
+
+        await store.send(\.view.uploadToggled, true) {
+            $0.$measuresUpload.withLock { $0 = true }
+        }
+    }
+
+    @Test func theUploadSwitchIsIgnoredDuringARun() async {
+        var state = SpeedTest.State()
+        state.phase = .pinging
+        let store = TestStore(initialState: state) {
+            SpeedTest()
+        }
+
+        await store.send(\.view.uploadToggled, true)
+    }
+
     @Test func openSettingsOpensTheSettingsURL() async {
         let opened = LockIsolated<URL?>(nil)
         let store = TestStore(initialState: SpeedTest.State()) {

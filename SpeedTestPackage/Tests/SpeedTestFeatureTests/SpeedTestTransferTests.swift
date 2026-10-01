@@ -60,6 +60,26 @@ import TestSupport
         ])
     }
 
+    /// The brief's test: download only. Upload is an opt-in extra.
+    @Test func withUploadOffTheRunEndsAfterTheDownload() async throws {
+        let meter = RunFakes.Meter([.samples([download1])])
+        let store = try Self.store(Self.serverChosen(measuresUpload: false), meter)
+
+        await store.send(.tokenResponse(.success(token))) {
+            $0.token = token
+        }
+        await store.receive(\.sampled) {
+            $0.downloadSamples = [download1]
+            $0.phase = .downloading
+        }
+        await store.receive(\.transferResponse) {
+            $0.download = TransferResult(lastSample: download1, wasPartial: false)
+            $0.phase = .finished
+        }
+
+        #expect(meter.starts.value.map(\.direction) == [.download])
+    }
+
     /// The chosen server sends nothing: the run moves to the failover target, another host, and carries on there.
     @Test func aServerThatNeverStartsIsReplacedByTheFailoverTarget() async throws {
         let meter = RunFakes.Meter([.samples([], then: .transferFailed), .samples([download1]), .samples([upload1])])
@@ -241,7 +261,7 @@ import TestSupport
 
     /// Elektro Solution Prague on ports 81 and 88 (one host), then jablonka.cz; the first one is chosen. The
     /// failover target is jablonka.cz: the other port is on the host that just failed.
-    private static func serverChosen() throws -> SpeedTest.State {
+    private static func serverChosen(measuresUpload: Bool = true) throws -> SpeedTest.State {
         let candidates = Fixtures.candidates
         let order = try [
             #require(candidates.first { $0.server.provider == "Elektro Solution" && $0.server.port == 81 }),
@@ -254,6 +274,7 @@ import TestSupport
         state.order = order
         state.selection = SpeedTest.Selection(server: order[0].server, ping: nil, reason: .lowestPing)
         state.phase = .connecting(.download)
+        state.$measuresUpload.withLock { $0 = measuresUpload }
         return state
     }
 

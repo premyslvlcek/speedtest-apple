@@ -45,14 +45,16 @@ struct MeasurementPanel: View {
                     tag: store.downloadTag,
                     accessibilityIdentifier: "downloadField"
                 )
-                Divider()
-                ResultRow(
-                    title: Text(.fieldUpload),
-                    value: store.uploadString,
-                    tag: store.uploadTag,
-                    isSecondary: true,
-                    accessibilityIdentifier: "uploadField"
-                )
+                if store.measuresUpload {
+                    Divider()
+                    ResultRow(
+                        title: Text(.fieldUpload),
+                        value: store.uploadString,
+                        tag: store.uploadTag,
+                        isSecondary: true,
+                        accessibilityIdentifier: "uploadField"
+                    )
+                }
             }
 
             if store.notes.contains(.icmpBlocked) {

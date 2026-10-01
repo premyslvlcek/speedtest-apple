@@ -34,6 +34,16 @@ public struct SpeedTestView: View {
                 .listRowSeparator(.hidden)
             }
 
+            Section {
+                Toggle(isOn: Binding(get: { store.measuresUpload }, set: { send(.uploadToggled($0)) })) {
+                    Text(.settingsMeasureUpload)
+                }
+                .disabled(store.isRunning)
+                .accessibilityIdentifier("uploadToggle")
+            } footer: {
+                Text(.settingsMeasureUploadFootnote)
+            }
+
             ServersSection(
                 candidates: store.candidates,
                 selectedID: store.selection?.server.id,

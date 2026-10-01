@@ -115,6 +115,12 @@ extension SpeedTest {
         }
 
         state.download = TransferResult(lastSample: last, wasPartial: false)
+        guard state.measuresUpload else {
+            state.phase = .finished
+
+            return .none
+        }
+
         state.phase = .connecting(.upload)
 
         return measure(.upload, on: server, token: token)
