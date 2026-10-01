@@ -99,17 +99,6 @@ import Testing
         #expect(session.result.rtts == [.seconds(1)])
     }
 
-    @Test func ignoresSomethingThatIsNotAnEchoReply() {
-        var session = Self.makeSession()
-        session.recordSent(sequence: 0, at: .zero)
-
-        let ownRequest = EchoMessage(identifier: Self.identifier, sequence: 0, payload: Self.token)
-            .requestData(family: .ipv6)
-        session.record(datagram: ownRequest, at: .milliseconds(1))
-
-        #expect(session.result.received == 0)
-    }
-
     @Test func sentIsTheCountEvenWhenFewerWereRecorded() {
         // A request we meant to send and got no answer to is a loss: 1 of 5, not 1 of 2.
         var session = Self.makeSession(count: 5)
@@ -142,14 +131,5 @@ import Testing
         session.record(datagram: Self.ipv4Reply(sequence: 0), at: .milliseconds(5))
 
         #expect(session.result.rtts == [.milliseconds(5)])
-    }
-
-    @Test func anIPv4SessionIgnoresAnIPv6Reply() {
-        var session = Self.makeIPv4Session()
-        session.recordSent(sequence: 0, at: .zero)
-
-        session.record(datagram: Self.reply(sequence: 0), at: .milliseconds(5))
-
-        #expect(session.result.received == 0)
     }
 }

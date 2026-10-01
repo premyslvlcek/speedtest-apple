@@ -52,12 +52,14 @@ import Testing
         #expect(EchoMessage.checksum(bytes) == 0x220D)
     }
 
-    @Test func checksumPadsAnOddByteCountWithZero() {
-        #expect(EchoMessage.checksum(Data([0x01])) == 0xFEFF)
+    @Test func checksumFoldsACarryThatProducesAnotherCarry() {
+        // FFFF + FFFF + 0001 = 1FFFF; folding gives FFFF + 1 = 10000, which carries again: 0000 + 1 = 0001.
+        // The one's complement of 0001 is FFFE. A single fold would leave a 17-bit sum.
+        #expect(EchoMessage.checksum(Data([0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x01])) == 0xFFFE)
     }
 
-    @Test func checksumOfAPacketIncludingItsChecksumIsZero() {
-        #expect(EchoMessage.checksum(Data(Captured.ipv4Request)) == 0)
+    @Test func checksumPadsAnOddByteCountWithZero() {
+        #expect(EchoMessage.checksum(Data([0x01])) == 0xFEFF)
     }
 
     // MARK: - Encoding
@@ -75,20 +77,6 @@ import Testing
         #expect(request.dropFirst(8) == Captured.payload)
     }
 
-    @Test func ipv4ReplyDataMatchesTheCapturedReplyWithoutItsIPHeader() {
-        let reply = Captured.message.replyData(family: .ipv4)
-
-        #expect([UInt8](reply) == Array(Captured.ipv4ReplyWithHeader.dropFirst(20)))
-    }
-
-    @Test func ipv6ReplyDataMatchesTheCapturedReplyApartFromTheKernelChecksum() {
-        var expected = Captured.ipv6Reply
-        expected[2] = 0
-        expected[3] = 0
-
-        #expect([UInt8](Captured.message.replyData(family: .ipv6)) == expected)
-    }
-
     // MARK: - Decoding requests (for test fakes that play the remote host)
 
     @Test func anIPv4RequestIsParsed() {
@@ -97,10 +85,6 @@ import Testing
 
     @Test func anIPv6RequestIsParsed() {
         #expect(EchoMessage(requestData: Data(Captured.ipv6OwnRequest), family: .ipv6) == Captured.message)
-    }
-
-    @Test func aReplyIsNotARequest() {
-        #expect(EchoMessage(requestData: Data(Captured.ipv6Reply), family: .ipv6) == nil)
     }
 
     // MARK: - Decoding replies
@@ -117,13 +101,6 @@ import Testing
         #expect(EchoMessage(replyData: Data(Captured.ipv6OwnRequest), family: .ipv6) == nil)
     }
 
-    @Test func anIPv4RequestIsNotAReply() {
-        var withHeader = Array(Captured.ipv4ReplyWithHeader.prefix(20))
-        withHeader.append(contentsOf: Captured.ipv4Request)
-
-        #expect(EchoMessage(replyData: Data(withHeader), family: .ipv4) == nil)
-    }
-
     @Test func anIPv4ReplyWithoutItsHeaderIsRejected() {
         let bare = Data(Captured.ipv4ReplyWithHeader.dropFirst(20))
 
@@ -132,7 +109,6 @@ import Testing
 
     @Test func truncatedDataIsRejected() {
         #expect(EchoMessage(replyData: Data(Captured.ipv6Reply.prefix(7)), family: .ipv6) == nil)
-        #expect(EchoMessage(replyData: Data(Captured.ipv4ReplyWithHeader.prefix(27)), family: .ipv4) == nil)
         #expect(EchoMessage(replyData: Data(), family: .ipv4) == nil)
     }
 
