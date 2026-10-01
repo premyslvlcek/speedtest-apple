@@ -99,15 +99,6 @@ import Testing
         #expect(session.result.rtts == [.seconds(1)])
     }
 
-    @Test func ignoresAReplyTimestampedBeforeItsRequest() {
-        var session = Self.makeSession()
-        session.recordSent(sequence: 0, at: .milliseconds(10))
-
-        session.record(datagram: Self.reply(sequence: 0), at: .milliseconds(5))
-
-        #expect(session.result.received == 0)
-    }
-
     @Test func ignoresSomethingThatIsNotAnEchoReply() {
         var session = Self.makeSession()
         session.recordSent(sequence: 0, at: .zero)

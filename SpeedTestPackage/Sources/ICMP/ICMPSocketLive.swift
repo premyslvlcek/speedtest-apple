@@ -11,7 +11,7 @@ import Foundation
 
 extension ICMPSocket {
     /// Why the live socket couldn't be opened, connected or written to, with the `errno` value.
-    enum Failure: Error, Equatable {
+    enum Failure: Error {
         case open(Int32)
         case connect(Int32)
         case send(Int32)
@@ -52,16 +52,34 @@ extension ICMPSocket {
             throw Failure.connect(code)
         }
 
-        // Non-blocking, so draining the socket in the read handler stops when it's empty. recv() also passes
-        // MSG_DONTWAIT, so a read can never block even if this flag were lost.
-        let flags = fcntl(descriptor, F_GETFL)
+        let source = readSource(for: descriptor, onDatagram: onDatagram)
 
-        guard flags >= 0, fcntl(descriptor, F_SETFL, flags | O_NONBLOCK) == 0 else {
-            let code = errno
-            Darwin.close(descriptor)
-            throw Failure.open(code)
-        }
+        return ICMPSocket(
+            send: { packet in
+                let sent = packet.withUnsafeBytes { raw in
+                    Darwin.send(descriptor, raw.baseAddress, raw.count, MSG_DONTWAIT)
+                }
 
+                guard sent == packet.count else {
+                    throw Failure.send(errno)
+                }
+            },
+            close: {
+                source.cancel()
+            }
+        )
+    }
+
+    /// The largest datagram read at once. An echo reply with our 16-byte token is 44 bytes including its IPv4
+    /// header, so this leaves room for IP options and anything else the peer might send.
+    private static let maximumDatagramLength = 2048
+
+    /// Reads every datagram as it arrives and passes it to `onDatagram`, then closes the descriptor once the
+    /// source is cancelled (dispatch runs the cancel handler only after any running read has finished).
+    private static func readSource(
+        for descriptor: Int32,
+        onDatagram: @escaping @Sendable (Data) -> Void
+    ) -> any DispatchSourceRead {
         // The receive time is taken on this queue, so it runs at the same priority as the rest of a ping.
         let source = DispatchSource.makeReadSource(
             fileDescriptor: descriptor,
@@ -69,8 +87,9 @@ extension ICMPSocket {
         )
 
         source.setEventHandler {
-            // Drain everything that's waiting; the handler runs again when more arrives.
-            var buffer = [UInt8](repeating: 0, count: 2048)
+            // Drain everything that's waiting; the handler runs again when more arrives. MSG_DONTWAIT makes the
+            // last recv() return at once when the socket is empty, instead of blocking this queue.
+            var buffer = [UInt8](repeating: 0, count: maximumDatagramLength)
 
             while true {
                 let length = recv(descriptor, &buffer, buffer.count, MSG_DONTWAIT)
@@ -88,20 +107,6 @@ extension ICMPSocket {
         }
 
         source.activate()
-
-        return ICMPSocket(
-            send: { packet in
-                let sent = packet.withUnsafeBytes { raw in
-                    Darwin.send(descriptor, raw.baseAddress, raw.count, 0)
-                }
-
-                guard sent == packet.count else {
-                    throw Failure.send(errno)
-                }
-            },
-            close: {
-                source.cancel()
-            }
-        )
+        return source
     }
 }

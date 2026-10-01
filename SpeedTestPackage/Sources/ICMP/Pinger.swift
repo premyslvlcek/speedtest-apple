@@ -42,7 +42,7 @@ public actor Pinger {
 
     public func ping(_ configuration: PingConfiguration = .standard) async -> PingResult {
         precondition(
-            (1 ... 65536).contains(configuration.count),
+            (1 ... Int(UInt16.max) + 1).contains(configuration.count),
             "A ping sends 1 to 65 536 requests: each one gets its own 16-bit sequence number."
         )
         let noReply = PingResult.noReply(sent: configuration.count)
@@ -74,7 +74,7 @@ public actor Pinger {
         }
 
         let identifier = UInt16.random(in: .min ... .max)
-        let token = Data((0 ..< 16).map { _ in UInt8.random(in: .min ... .max) })
+        let token = Data((0 ..< Self.tokenLength).map { _ in UInt8.random(in: .min ... .max) })
         // A local copy, so the child task below captures the clock and not the actor itself.
         let clock = clock
 
@@ -97,25 +97,32 @@ public actor Pinger {
                 family: address.family
             )
 
-            loop: for await event in events {
-                switch event {
-                case let .sent(sequence, time):
-                    session.recordSent(sequence: sequence, at: time)
-
-                case let .datagram(datagram, time):
-                    session.record(datagram: datagram, at: time)
-
-                case .deadline:
-                    break loop
-                }
-
-                if session.isComplete {
-                    break loop
-                }
-            }
-
+            await Self.collect(events, into: &session)
             group.cancelAll()
             return session.result
+        }
+    }
+
+    /// The random payload that marks our replies: 16 bytes, so another pinger can't match it by chance.
+    private static let tokenLength = 16
+
+    /// Feeds events into the session until every request is answered or the deadline passes.
+    private static func collect(_ events: AsyncStream<Event>, into session: inout PingSession) async {
+        for await event in events {
+            switch event {
+            case let .sent(sequence, time):
+                session.recordSent(sequence: sequence, at: time)
+
+            case let .datagram(datagram, time):
+                session.record(datagram: datagram, at: time)
+
+            case .deadline:
+                return
+            }
+
+            if session.isComplete {
+                return
+            }
         }
     }
 }

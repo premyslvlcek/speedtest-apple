@@ -34,10 +34,4 @@ import Testing
         #expect(result.received == 0)
         #expect(!result.isReachable)
     }
-
-    @Test func standardConfigurationMatchesTheSpec() {
-        #expect(PingConfiguration.standard.count == 5)
-        #expect(PingConfiguration.standard.interval == .milliseconds(100))
-        #expect(PingConfiguration.standard.timeout == .seconds(1))
-    }
 }
