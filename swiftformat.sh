@@ -33,5 +33,4 @@ mint run swiftformat "${targets[@]}" "${mode[@]}" \
     --trailing-commas never \
     --disable andOperator \
     --disable redundantSwiftTestingSuite,swiftTestingTestCaseNames,blankLinesBetweenImports \
-    --importgrouping testable-last \
     --enable sortSwitchCases,blankLineAfterSwitchCase
