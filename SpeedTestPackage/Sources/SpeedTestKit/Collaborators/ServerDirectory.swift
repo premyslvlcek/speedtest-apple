@@ -20,3 +20,8 @@ public struct ServerDirectory: Sendable {
     /// `POST /api/v1/tokens`: a fresh token for this run's transfers.
     public var token: @Sendable () async throws -> TransferToken
 }
+
+public extension DependencyValues {
+    @DependencyEntry(liveValue: ServerDirectory.live(timeout: SpeedTestConfiguration.standard.directoryTimeout))
+    var serverDirectory = ServerDirectory()
+}

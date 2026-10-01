@@ -5,6 +5,8 @@
 //  Created by Premysl Vlcek on 01.10.2026.
 //
 
+import ICMP
+
 /// A server picked for pinging.
 public struct Candidate: Sendable, Equatable, Identifiable {
     public let server: Server
@@ -20,5 +22,15 @@ public struct Candidate: Sendable, Equatable, Identifiable {
         self.server = server
         self.distance = distance
         self.ping = ping
+    }
+}
+
+public extension Candidate {
+    /// The ping result, once it has arrived.
+    var pingResult: PingResult? {
+        guard case let .finished(result) = ping else {
+            return nil
+        }
+        return result
     }
 }

@@ -5,6 +5,7 @@
 //  Created by Premysl Vlcek on 01.10.2026.
 //
 
+import Dependencies
 import DependenciesMacros
 
 /// A running transfer over parallel connections. It has no clock and does no sampling:
@@ -52,4 +53,8 @@ public struct TransferService: Sendable {
         _ token: TransferToken,
         _ configuration: TransferConfiguration
     ) -> TransferHandle = { _, _, _, _ in .failing(CancellationError()) }
+}
+
+public extension DependencyValues {
+    @DependencyEntry var transferService = TransferService()
 }

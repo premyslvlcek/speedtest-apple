@@ -5,6 +5,7 @@
 //  Created by Premysl Vlcek on 01.10.2026.
 //
 
+import Dependencies
 import DependenciesMacros
 import ICMP
 
@@ -13,4 +14,8 @@ import ICMP
 public struct PingService: Sendable {
     public var ping: @Sendable (_ host: String, _ configuration: PingConfiguration) async -> PingResult
         = { _, configuration in .noReply(sent: configuration.count) }
+}
+
+public extension DependencyValues {
+    @DependencyEntry var pingService = PingService()
 }

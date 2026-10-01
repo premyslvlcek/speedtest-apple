@@ -11,13 +11,13 @@ lowest latency. SwiftUI and The Composable Architecture (TCA) on top of a small 
 ## Layout
 
 - `SpeedTest/`: the app target (`@main`, scenes, assets). Kept thin.
-- `SpeedTestPackage/`: all the real code, in six modules.
+- `SpeedTestPackage/`: all the real code, in five modules.
   - `ICMP`: ICMP echo over unprivileged datagram sockets. No third-party dependencies.
-  - `SpeedTestKit`: the speed-test engine (an actor) and its collaborators. No UI and no TCA.
-  - `SpeedTestClient`: the TCA dependency that exposes the engine.
+  - `SpeedTestKit`: the collaborators of a run (dependency clients), the transfer meter and the pure rules (server
+    selection, throughput sampling, error mapping). No UI and no TCA.
   - `DesignSystem`: formatting, colors, button and card styles, the speed chart. Takes plain values.
   - `HistoryFeature`: past results in SQLite through SQLiteData, with a reducer and a list.
-  - `SpeedTestFeature`: the main reducer and screen.
+  - `SpeedTestFeature`: the reducer that drives a run step by step, and the screen.
 - `SpeedTestUITests/`: two XCUITest smoke tests against a scripted run.
 - `docs/DESIGN.md`: the technical design.
 
@@ -67,22 +67,31 @@ The tools are pinned in the `Mintfile`; `mint bootstrap` installs them.
 - A `Reduce { state, action in switch … }` body, with a blank line before each `return .none`.
 - Children: `Scope(\.child, action: \.child) { Child() }`; views: `store.scope(\.child, action: \.child)`.
   Never the `state:` label.
+- Share logic with a method on the reducer that takes `inout State` and returns an `Effect<Action>` (one start helper
+  for Start and Retry, say), never by sending another action with `.send`.
 
 **Effects**
 - `.run { [value = state.value] send in await send(.xResponse(Result { … })) }`.
-- One cancel ID type per long-running effect: `struct FooId: Hashable, Sendable {}` with `.cancellable(id:)`.
+- One cancel ID type per long-running effect: `struct FooId: Hashable, Sendable {}` with `.cancellable(id:)`. The effect
+  that starts something restartable uses `cancelInFlight: true`.
 - Time through `@Dependency(\.continuousClock)`, durations as static constants.
 - The package enables TCA's `ComposableArchitecture2Deprecations` trait. Don't use what it or TCA 1.25 deprecate:
   `Effect.concatenate`, `Effect.map`, `.animation()`/`.debounce`/`.throttle` on effects, `store.publisher`,
-  `Store.withState`, the reducer-builder `onChange`, `@Reducer(state:action:)`, `store.send(_:animation:)`.
-- Animation: `await send(.x, animation: …)` in an effect, `withAnimation { store.send(.x) }` in a view.
+  `Store.withState`, the reducer-builder `onChange`, `@Reducer(state:action:)`, `store.send(_:animation:)`,
+  `store.send(_:transaction:)`, `Effect.transaction(_:)`, `Scope(state:action:)`, and calling `reduce(into:action:)`
+  directly. In a `@ViewAction` view, `send(_:animation:)` forwards to the deprecated `store.send`, so it's out too.
+- Animation: `await send(.x, animation: …)` in an effect, `withAnimation { _ = send(.x) }` in a view (`@ViewAction`
+  warns about `store.send`; `_ =` drops the returned task).
 - Never send an action synchronously while another action is being reduced.
 
 **Dependencies**
 - `@DependencyClient` structs with `@Sendable` closures; non-throwing endpoints get a default.
 - Registered with `@DependencyEntry` in `extension DependencyValues`.
 - Interface, live and scripted/test values in separate files.
-- `SpeedTestKit`'s engine takes its collaborators through `init`; only `SpeedTestClient` is registered.
+- A live value that needs other dependencies resolves them with `@Dependency`, not through `init`. The macro's
+  `init()` (every endpoint unimplemented) is the test value.
+- The reducer owns the flow and every decision. A dependency wraps one piece of I/O, or one piece of concurrency that
+  can't live in `State` (the transfer meter's live connection handle). No engine that runs the whole flow.
 
 **Errors**
 - Plain `throws`, not typed throws. `any Error` is written out.
@@ -104,6 +113,16 @@ The tools are pinned in the `Mintfile`; `mint bootstrap` installs them.
 - Actions sent and received by key path: `store.send(\.view.startStopTapped)`.
 - `TestClock`/`ImmediateClock` for time, `LockIsolated` for capturing calls. Tests never assert on wall-clock time
   and never sleep: control time with a test clock, so a slow machine can't make a test fail or pass.
+- A test awaits what it started in its own body (iterate the stream there, or use a task group), never a
+  `Task { … }` it then awaits with `.value`: a time limit cancels the test's task, not an unstructured one, so such a
+  test hangs instead of failing.
+- A suite that uses `TestClock` or `ImmediateClock` gets the `.mainSerialExecutor` trait (`TestSupport`), Point-Free's
+  recommended way to test async code: every task runs in order on the main executor, so the clocks' yields can't be
+  starved on a busy CI machine. Use the trait, not `withMainSerialExecutor` directly: the switch is process-wide, and
+  the trait keeps it on until the last test using it has finished. A suite that creates a `TestStore` gets the trait
+  too: a `TestStore` turns the switch on and, when released, puts back what it found, which could switch it off
+  under another suite. `TestClock` wakes sleepers on time, so a rule about late wake-ups is tested as a pure
+  function.
 - Snapshot tests run locally only (references are recorded on one machine); CI skips them.
 - Every test and every assertion must be able to fail for a plausible bug in this repository's code. No
   tautologies: don't restate a literal or a one-line computed property, don't test the standard library or a
