@@ -123,7 +123,9 @@ The tools are pinned in the `Mintfile`; `mint bootstrap` installs them.
   catalog's plural variants (Czech has one, few and other), not `if` statements.
 - Numbers, dates and durations use `FormatStyle` in the user's locale; units are SI symbols ("ms", "s", "km") and
   "Mbps". Functions that format take `locale: Locale = .current`, and tests pin the locale.
-- The app target's `InfoPlist.xcstrings` translates the location permission texts and the display name.
+- The app target's `InfoPlist.xcstrings` translates the location permission texts and the display name. It's also
+  what makes the app declare Czech: iOS picks a language only from the app's own localizations, so without it the
+  package's Czech strings are never used.
 - Tests that check a translation set `resource.locale` on the `LocalizedStringResource`:
   `String(localized:bundle:locale:)` ignores that locale when it picks the language.
 

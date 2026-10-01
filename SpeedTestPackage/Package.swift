@@ -112,6 +112,8 @@ let package = Package(
                 "SpeedTestFeature",
                 "SpeedTestKit",
                 "ICMP",
+                "TestSupport",
+                composableArchitecture,
                 dependenciesTestSupport,
                 snapshotTesting,
                 clocks

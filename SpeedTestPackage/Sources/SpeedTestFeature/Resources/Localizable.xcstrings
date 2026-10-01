@@ -1,7 +1,900 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-
+    "accessibility.downloadAverage" : {
+      "comment" : "VoiceOver announcement when a run finishes; the argument is the formatted number.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Průměr stahování: %@ megabitů za sekundu"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Download average: %@ megabits per second"
+          }
+        }
+      }
+    },
+    "accessibility.megabitsPerSecond" : {
+      "comment" : "VoiceOver value of the big number; the argument is the formatted number.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ megabitů za sekundu"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ megabits per second"
+          }
+        }
+      }
+    },
+    "accessibility.noValue" : {
+      "comment" : "VoiceOver value of the big number when nothing is measured yet.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bez hodnoty"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No value"
+          }
+        }
+      }
+    },
+    "app.title" : {
+      "comment" : "The app's name, shown as the Mac window title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Test rychlosti"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speed Test"
+          }
+        }
+      }
+    },
+    "button.runAgain" : {
+      "comment" : "The main button after a finished run.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spustit znovu"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Run again"
+          }
+        }
+      }
+    },
+    "button.start" : {
+      "comment" : "The main button before a run.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spustit"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start"
+          }
+        }
+      }
+    },
+    "button.stop" : {
+      "comment" : "The main button during a run.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zastavit"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop"
+          }
+        }
+      }
+    },
+    "button.tryAgain" : {
+      "comment" : "The main button after a failed run.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zkusit znovu"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try again"
+          }
+        }
+      }
+    },
+    "error.connectionLost" : {
+      "comment" : "Error message: every connection failed during a transfer.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Během testu se ztratilo spojení."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The connection was lost during the test."
+          }
+        }
+      }
+    },
+    "error.directoryUnavailable" : {
+      "comment" : "Error message: the server directory didn't answer.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seznam testovacích serverů není dostupný. Zkuste to za chvíli znovu."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't reach the list of speed test servers. Try again in a moment."
+          }
+        }
+      }
+    },
+    "error.networkChanged" : {
+      "comment" : "Error message: the network changed during a transfer.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Během testu se změnila síť."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The network changed during the test."
+          }
+        }
+      }
+    },
+    "error.noServers" : {
+      "comment" : "Error message: the directory returned no usable server.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenašel se žádný testovací server."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No speed test servers were found."
+          }
+        }
+      }
+    },
+    "error.offline" : {
+      "comment" : "Error message: the device has no network.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zdá se, že nejste připojeni k internetu. Zkontrolujte Wi-Fi nebo mobilní data a zkuste to znovu."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You appear to be offline. Check Wi-Fi or mobile data and try again."
+          }
+        }
+      }
+    },
+    "error.rateLimited" : {
+      "comment" : "Error message: the directory answered 429 Too Many Requests.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Služba měření rychlosti je přetížená. Zkuste to za minutu znovu."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The speed test service is busy. Try again in a minute."
+          }
+        }
+      }
+    },
+    "error.transferFailed" : {
+      "comment" : "Error message: neither the chosen server nor the failover sent any data.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Test se nepodařilo spustit na žádném z blízkých serverů. Zkuste to znovu."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The test couldn't start on any of the nearby servers. Try again."
+          }
+        }
+      }
+    },
+    "field.download" : {
+      "comment" : "Title of the result row with the download speed.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stahování"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Download"
+          }
+        }
+      }
+    },
+    "field.ping" : {
+      "comment" : "Title of the result row with the ping.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ping"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ping"
+          }
+        }
+      }
+    },
+    "field.server" : {
+      "comment" : "Title of the result row with the chosen server.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Server"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Server"
+          }
+        }
+      }
+    },
+    "field.upload" : {
+      "comment" : "Title of the result row with the upload speed.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odesílání"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upload"
+          }
+        }
+      }
+    },
+    "intro" : {
+      "comment" : "Introduction shown before the first run.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Najde 5 nejbližších testovacích serverů, změří k nim ping přes ICMP a na nejrychlejším pak měří stahování 15 s a odesílání 10 s."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finds the 5 closest speed test servers, pings each one over ICMP, then measures download for 15 s and upload for 10 s on the fastest."
+          }
+        }
+      }
+    },
+    "note.enableInSettings" : {
+      "comment" : "Button under the location-off note; opens Settings.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapnout v Nastavení"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enable in Settings"
+          }
+        }
+      }
+    },
+    "note.icmpBlocked" : {
+      "comment" : "Note when no server answered the ping.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Žádný ze serverů neodpověděl na ICMP. Síť nejspíš blokuje ping, proto se použije nejbližší server."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "None of the servers answered ICMP. This network probably blocks ping, so the nearest server is used instead."
+          }
+        }
+      }
+    },
+    "note.locationOff" : {
+      "comment" : "Note when the user didn't allow location access.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poloha je vypnutá, servery byly vybrány podle IP adresy (přibližně)."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Location is off, so servers were picked by IP (approximate)."
+          }
+        }
+      }
+    },
+    "note.locationUnavailable" : {
+      "comment" : "Note when no location fix arrived in time.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Polohu se nepodařilo zjistit, servery byly vybrány podle IP adresy."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't get your location, so servers were picked by IP."
+          }
+        }
+      }
+    },
+    "phase.connecting" : {
+      "comment" : "Phase label before the first byte of a transfer.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Připojuji…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connecting…"
+          }
+        }
+      }
+    },
+    "phase.downloadAverage" : {
+      "comment" : "Phase label when a run has finished: the big number is the download average.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stahování · průměr"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Download · average"
+          }
+        }
+      }
+    },
+    "phase.downloading" : {
+      "comment" : "Phase label during the download; the argument is the elapsed time, e.g. 7.4 s.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stahování · %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Downloading · %@"
+          }
+        }
+      }
+    },
+    "phase.failed" : {
+      "comment" : "Phase label when the run failed before measuring.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Test se nespustil"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't start"
+          }
+        }
+      }
+    },
+    "phase.findingServers" : {
+      "comment" : "Phase label while the list of test servers is fetched.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hledám servery…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finding servers…"
+          }
+        }
+      }
+    },
+    "phase.interruptedBackground" : {
+      "comment" : "Phase label when the iOS app went to the background during a run.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Přerušeno · aplikace přešla na pozadí"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interrupted · app went to background"
+          }
+        }
+      }
+    },
+    "phase.interruptedConnectionLost" : {
+      "comment" : "Phase label when every connection failed during a transfer.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Přerušeno · spojení ztraceno"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interrupted · connection lost"
+          }
+        }
+      }
+    },
+    "phase.interruptedNetworkChanged" : {
+      "comment" : "Phase label when the network changed (e.g. Wi-Fi to mobile data) during a transfer.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Přerušeno · síť se změnila"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interrupted · network changed"
+          }
+        }
+      }
+    },
+    "phase.locating" : {
+      "comment" : "Phase label while the device's location is found.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zjišťuji polohu…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Locating…"
+          }
+        }
+      }
+    },
+    "phase.pinging" : {
+      "comment" : "Phase label while pinging; the argument is the number of servers.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Pinguji %lld server…"
+                }
+              },
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Pinguji %lld servery…"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Pinguji %lld serverů…"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Pinging %lld server…"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Pinging %lld servers…"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "phase.ready" : {
+      "comment" : "Phase label before the first run.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Připraveno"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ready"
+          }
+        }
+      }
+    },
+    "phase.stopped" : {
+      "comment" : "Phase label after Stop, before any measurement.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zastaveno"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stopped"
+          }
+        }
+      }
+    },
+    "phase.stoppedAfterDownload" : {
+      "comment" : "Phase label after Stop during the upload; the big number is the download average.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zastaveno · průměr stahování"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stopped · download average"
+          }
+        }
+      }
+    },
+    "phase.stoppedAt" : {
+      "comment" : "Phase label after Stop during the download; the argument is the elapsed time.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zastaveno v %@ · průměr"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stopped at %@ · average"
+          }
+        }
+      }
+    },
+    "phase.uploading" : {
+      "comment" : "Phase label during the upload; the argument is the elapsed time, e.g. 7.4 s.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odesílání · %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uploading · %@"
+          }
+        }
+      }
+    },
+    "servers.byIP" : {
+      "comment" : "Header of the server list when the location is unknown and the servers were chosen by IP.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Servery poblíž (podle IP)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nearby servers (by IP)"
+          }
+        }
+      }
+    },
+    "servers.closest" : {
+      "comment" : "Header of the list of the five closest servers.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nejbližší servery"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Closest servers"
+          }
+        }
+      }
+    },
+    "tag.average" : {
+      "comment" : "Tag next to a speed that is a transfer's average.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "průměr"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "avg"
+          }
+        }
+      }
+    },
+    "tag.partialAverage" : {
+      "comment" : "Tag next to a speed that is the average of a stopped or interrupted transfer.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "průměr · částečný"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "avg · partial"
+          }
+        }
+      }
+    },
+    "unit.mbps" : {
+      "comment" : "Unit next to the big number: megabits per second.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mb/s"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mbps"
+          }
+        }
+      }
+    },
+    "value.choosing" : {
+      "comment" : "Server row value while the pings are still running.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "vybírám…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "choosing…"
+          }
+        }
+      }
+    },
+    "value.notRun" : {
+      "comment" : "Upload row value when the run stopped before the upload.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "neproběhlo"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "not run"
+          }
+        }
+      }
+    },
+    "value.speed" : {
+      "comment" : "A speed value; the argument is the formatted number, e.g. 486 or 12.3.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Mb/s"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Mbps"
+          }
+        }
+      }
+    },
+    "value.unavailable" : {
+      "comment" : "Upload row value when the upload couldn't start.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "nedostupné"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "unavailable"
+          }
+        }
+      }
+    }
   },
   "version" : "1.1"
 }
