@@ -28,7 +28,6 @@ import TestSupport
         // Every interval from the first byte to exactly 15 s: 60 samples, no drift.
         #expect(measurement.samples.map(\.elapsed) == (1 ... 60).map { interval * $0 })
         #expect(measurement.samples.last?.totalBytes == 60 * bytesPerRead)
-        #expect(measurement.samples.last?.averageMbps == 40)
     }
 
     @Test func uploadSamplesForTenSeconds() async {

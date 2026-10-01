@@ -16,5 +16,6 @@ public struct NetworkMonitor: Sendable {
 }
 
 public extension DependencyValues {
-    @DependencyEntry var networkMonitor = NetworkMonitor()
+    @DependencyEntry(liveValue: NetworkMonitor.live)
+    var networkMonitor = NetworkMonitor()
 }

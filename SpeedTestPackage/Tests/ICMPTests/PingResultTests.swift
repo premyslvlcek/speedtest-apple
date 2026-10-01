@@ -24,7 +24,7 @@ import Testing
         #expect(result.median == .milliseconds(7))
     }
 
-    @Test func noReplyHasNoMedianAndIsUnreachable() {
+    @Test func noReplyHasNoMedian() {
         let result = PingResult.noReply(sent: 5)
 
         #expect(result.median == nil)

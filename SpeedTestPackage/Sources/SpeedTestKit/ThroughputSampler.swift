@@ -7,7 +7,7 @@
 
 /// Turns `(elapsed since the first byte, total bytes)` readings into samples.
 ///
-/// Pure: the engine owns the clock and the 250 ms tick, reads the byte counter and calls `add`.
+/// Pure: the transfer meter owns the clock and the 250 ms tick, reads the byte counter and calls `add`.
 /// Readings must arrive in increasing `elapsed` order.
 public struct ThroughputSampler: Sendable {
     private struct Reading: Sendable {
