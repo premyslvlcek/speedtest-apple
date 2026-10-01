@@ -53,7 +53,7 @@ struct PingSession {
 
         let rtt = time - request.sentAt
 
-        guard rtt >= .zero, rtt <= timeout else {
+        guard rtt <= timeout else {
             return
         }
 

@@ -89,13 +89,21 @@ import Testing
         #expect([UInt8](Captured.message.replyData(family: .ipv6)) == expected)
     }
 
-    @Test func anIPv6ReplyRoundTrips() {
-        let reply = Captured.message.replyData(family: .ipv6)
+    // MARK: - Decoding requests (for test fakes that play the remote host)
 
-        #expect(EchoMessage(replyData: reply, family: .ipv6) == Captured.message)
+    @Test func anIPv4RequestIsParsed() {
+        #expect(EchoMessage(requestData: Data(Captured.ipv4Request), family: .ipv4) == Captured.message)
     }
 
-    // MARK: - Decoding
+    @Test func anIPv6RequestIsParsed() {
+        #expect(EchoMessage(requestData: Data(Captured.ipv6OwnRequest), family: .ipv6) == Captured.message)
+    }
+
+    @Test func aReplyIsNotARequest() {
+        #expect(EchoMessage(requestData: Data(Captured.ipv6Reply), family: .ipv6) == nil)
+    }
+
+    // MARK: - Decoding replies
 
     @Test func ipv4ReplyIsParsedPastItsIPHeader() {
         #expect(EchoMessage(replyData: Data(Captured.ipv4ReplyWithHeader), family: .ipv4) == Captured.message)

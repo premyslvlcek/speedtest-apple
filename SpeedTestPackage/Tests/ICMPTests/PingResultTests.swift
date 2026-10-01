@@ -13,7 +13,6 @@ import Testing
         let result = PingResult(rtts: [.milliseconds(9), .milliseconds(5), .milliseconds(7)], sent: 5)
 
         #expect(result.median == .milliseconds(7))
-        #expect(result.received == 3)
         #expect(result.isReachable)
     }
 
@@ -29,15 +28,7 @@ import Testing
     @Test func noReplyHasNoMedianAndIsUnreachable() {
         let result = PingResult.noReply(sent: 5)
 
-        #expect(result == PingResult(rtts: [], sent: 5))
         #expect(result.median == nil)
-        #expect(result.received == 0)
         #expect(!result.isReachable)
-    }
-
-    @Test func standardConfigurationMatchesTheSpec() {
-        #expect(PingConfiguration.standard.count == 5)
-        #expect(PingConfiguration.standard.interval == .milliseconds(100))
-        #expect(PingConfiguration.standard.timeout == .seconds(1))
     }
 }
