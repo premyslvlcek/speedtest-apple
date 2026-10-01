@@ -107,7 +107,7 @@ import Testing
     }
 
     @Test func noRepliesAtAllPutTheNearestFirst() {
-        // The ICMP-blocked fallback: the engine reports it as .icmpBlocked.
+        // The ICMP-blocked fallback: the reducer reports it as .icmpBlocked.
         let far = Candidate(server: .fixture("far"), distance: 3000, ping: noReply)
         let near = Candidate(server: .fixture("near"), distance: 1000, ping: noReply)
         let middle = Candidate(server: .fixture("middle"), distance: 2000, ping: noReply)

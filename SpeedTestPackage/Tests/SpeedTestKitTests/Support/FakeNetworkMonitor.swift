@@ -13,7 +13,7 @@ import SpeedTestKit
 final class FakeNetworkMonitor: Sendable {
     private let watchers = LockIsolated<[AsyncStream<Void>.Continuation]>([])
     private let subscriptionsContinuation: AsyncStream<Void>.Continuation
-    /// Yields once whenever the engine starts a watch.
+    /// Yields once whenever the transfer meter starts a watch.
     let subscriptions: AsyncStream<Void>
 
     init() {

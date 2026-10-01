@@ -9,11 +9,11 @@ import Dependencies
 import DependenciesMacros
 
 /// A running transfer over parallel connections. It has no clock and does no sampling:
-/// the engine reads `totalBytes()` on its own tick.
+/// the transfer meter reads `totalBytes()` on its own tick.
 public struct TransferHandle: Sendable {
     /// Returns at the first byte. Throws the last connection's error if every connection fails first.
     public var firstByte: @Sendable () async throws -> Void
-    /// The bytes counted so far. Non-blocking: the engine reads it on every sample tick.
+    /// The bytes counted so far. Non-blocking: the transfer meter reads it on every sample tick.
     public var totalBytes: @Sendable () -> Int64
     /// False once every connection has failed.
     public var isAlive: @Sendable () -> Bool
