@@ -236,6 +236,41 @@ extension SpeedTest.State {
     }
 }
 
+extension SpeedTest.State.PhaseLabel {
+    /// The elapsed time a label shows, if it shows one.
+    var seconds: Double? {
+        switch self {
+        case let .downloading(seconds), let .uploading(seconds):
+            seconds
+
+        case let .stopped(atSeconds: seconds):
+            seconds
+
+        case .connecting, .downloadAverage, .failed, .findingServers, .interrupted, .locating, .pinging, .ready,
+             .stoppedAfterDownload:
+            nil
+        }
+    }
+
+    /// The same label with another elapsed time, for drawing the in-between frames of a count.
+    func withSeconds(_ seconds: Double) -> Self {
+        switch self {
+        case .downloading:
+            .downloading(seconds: seconds)
+
+        case .uploading:
+            .uploading(seconds: seconds)
+
+        case .stopped(atSeconds: .some):
+            .stopped(atSeconds: seconds)
+
+        case .connecting, .downloadAverage, .failed, .findingServers, .interrupted, .locating, .pinging, .ready,
+             .stopped(atSeconds: .none), .stoppedAfterDownload:
+            self
+        }
+    }
+}
+
 extension Duration {
     var inMilliseconds: Double {
         inSeconds * 1000

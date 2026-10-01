@@ -161,4 +161,16 @@ import Testing
 
         #expect(state.uploadValue == .unavailable)
     }
+
+    /// The label's elapsed time is swapped frame by frame while it counts; every other part must stay.
+    @Test(arguments: [
+        (SpeedTest.State.PhaseLabel.downloading(seconds: 7.25), SpeedTest.State.PhaseLabel.downloading(seconds: 7.4)),
+        (.uploading(seconds: 2.5), .uploading(seconds: 7.4)),
+        (.stopped(atSeconds: 3), .stopped(atSeconds: 7.4)),
+        (.stopped(atSeconds: nil), .stopped(atSeconds: nil)),
+        (.ready, .ready)
+    ])
+    func aLabelTakesAnotherElapsedTime(label: SpeedTest.State.PhaseLabel, expected: SpeedTest.State.PhaseLabel) {
+        #expect(label.withSeconds(7.4) == expected)
+    }
 }

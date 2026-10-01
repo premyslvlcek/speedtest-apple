@@ -16,15 +16,13 @@ struct MeasurementPanel: View {
     let store: StoreOf<SpeedTest>
     let onOpenSettings: () -> Void
 
-    @ScaledMetric(relativeTo: .largeTitle) private var bigNumberSize: CGFloat = 64
-
     var body: some View {
         VStack(spacing: 14) {
             ForEach(store.notes.filter { $0 != .icmpBlocked }, id: \.self) { note in
                 NoteView(note: note, onOpenSettings: onOpenSettings)
             }
 
-            header
+            BigNumber(store: store)
 
             ResultCard {
                 ResultRow(
@@ -75,10 +73,18 @@ struct MeasurementPanel: View {
         }
         .frame(maxWidth: .infinity)
     }
+}
 
-    private var header: some View {
+/// The phase label and the big number. Its own view, so a new sample redraws only this, not the whole panel.
+private struct BigNumber: View {
+    let store: StoreOf<SpeedTest>
+
+    @ScaledMetric(relativeTo: .largeTitle) private var size: CGFloat = 64
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
         VStack(spacing: 2) {
-            store.phaseLabel.text
+            phaseLabel
                 .font(.footnote.weight(.semibold))
                 .textCase(.uppercase)
                 .foregroundStyle(Palette.secondaryText)
@@ -86,12 +92,12 @@ struct MeasurementPanel: View {
                 .accessibilityIdentifier("phaseLabel")
 
             HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Text(verbatim: SpeedFormat.mbps(store.bigNumber))
-                    .font(.system(size: bigNumberSize, weight: .bold, design: .rounded))
+                number
+                    .font(.system(size: size, weight: .bold, design: .rounded))
                     .monospacedDigit()
-                    .contentTransition(.numericText())
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
+                    .animation(counting, value: store.bigNumber)
 
                 Text(.unitMbps)
                     .font(.headline)
@@ -99,20 +105,48 @@ struct MeasurementPanel: View {
             }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(store.phaseLabel.text)
-            .accessibilityValue(bigNumberAccessibilityValue)
+            .accessibilityValue(accessibilityValue)
             .accessibilityAddTraits(.updatesFrequently)
             .accessibilityIdentifier("bigNumber")
         }
     }
 
+    /// Counts to each sample over one sample interval, so the numbers are always moving, never jumping.
+    private var counting: Animation? {
+        reduceMotion ? nil : .linear(duration: Self.interval)
+    }
+
+    /// The elapsed time in the label counts too: 0.3, 0.4, 0.5 s instead of 0.3, 0.5, 0.8.
+    @ViewBuilder
+    private var phaseLabel: some View {
+        let label = store.phaseLabel
+        if let seconds = label.seconds {
+            AnimatedNumber(seconds) { label.withSeconds($0).text }
+                .animation(counting, value: seconds)
+        } else {
+            label.text
+        }
+    }
+
+    @ViewBuilder
+    private var number: some View {
+        if let value = store.bigNumber {
+            AnimatedNumber(value) { Text(verbatim: SpeedFormat.mbps($0)) }
+        } else {
+            Text(verbatim: SpeedFormat.placeholder)
+        }
+    }
+
     /// Read quietly while it changes 4 times a second; the view announces the final value once.
-    private var bigNumberAccessibilityValue: Text {
+    private var accessibilityValue: Text {
         guard let value = store.bigNumber else {
             return Text(.accessibilityNoValue)
         }
 
         return Text(.accessibilityMegabitsPerSecond(SpeedFormat.mbps(value)))
     }
+
+    private static let interval = SpeedTest.configuration.sampleInterval.inSeconds
 }
 
 private struct NoteView: View {
