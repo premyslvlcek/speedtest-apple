@@ -24,6 +24,8 @@ struct MeasurementPanel: View {
 
             BigNumber(store: store)
 
+            LiveChart(store: store)
+
             ResultCard {
                 ResultRow(
                     title: Text(.fieldServer),
@@ -147,6 +149,33 @@ private struct BigNumber: View {
     }
 
     private static let interval = SpeedTest.configuration.sampleInterval.inSeconds
+}
+
+/// The live graph under the big number. Its own view, so a new point redraws only the chart; before the first
+/// transfer of a run an empty space of the same height keeps the card from jumping.
+private struct LiveChart: View {
+    let store: StoreOf<SpeedTest>
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        if let series = store.chartSeries {
+            SpeedChart(
+                points: series.points,
+                average: series.average,
+                duration: series.duration,
+                tint: series.direction == .download ? Palette.download : Palette.upload
+            )
+            // New points slide in over one sample interval, like the numbers above.
+            .animation(
+                reduceMotion ? nil : .linear(duration: SpeedTest.configuration.sampleInterval.inSeconds),
+                value: series.points
+            )
+        } else if store.isRunning {
+            Color.clear
+                .frame(height: 120)
+        }
+    }
 }
 
 private struct NoteView: View {
