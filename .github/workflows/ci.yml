@@ -71,11 +71,19 @@ jobs:
           xcodebuild -version
           swift --version
 
+      # Through xcodebuild, not `swift test`: SwiftPM on the command line doesn't compile String Catalogs or
+      # generate their symbols.
       - name: Package tests (macOS)
+        working-directory: SpeedTestPackage
         run: |
           set -o pipefail
-          swift test --package-path SpeedTestPackage 2>&1 | tee swift-test-macos.log
-          .github/scripts/check-warnings.sh swift-test-macos.log
+          xcodebuild test \
+            -scheme SpeedTestPackage-Package \
+            -destination 'platform=macOS' \
+            -skipMacroValidation \
+            -skip-testing:SpeedTestFeatureTests/SnapshotTests \
+            -quiet 2>&1 | tee ../package-tests-macos.log
+          ../.github/scripts/check-warnings.sh ../package-tests-macos.log
 
       - name: Package tests (iOS)
         working-directory: SpeedTestPackage

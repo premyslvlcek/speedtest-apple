@@ -23,14 +23,18 @@ lowest latency. SwiftUI and The Composable Architecture (TCA) on top of a small 
 
 ## Build and test
 
-Run from the repository root.
+Run from the repository root. The package is built and tested with `xcodebuild`, not `swift build`/`swift test`:
+SwiftPM on the command line doesn't compile String Catalogs or generate their symbols.
 
 ```bash
-# Fast: all package tests on macOS
-swift test --package-path SpeedTestPackage
+# All package tests on macOS (run inside SpeedTestPackage/)
+xcodebuild test -scheme SpeedTestPackage-Package -destination 'platform=macOS' -skipMacroValidation
 
-# One test target
-swift test --package-path SpeedTestPackage --filter ICMPTests
+# One test target, or one suite
+xcodebuild test -scheme SpeedTestPackage-Package -destination 'platform=macOS' -skipMacroValidation \
+  -only-testing:ICMPTests
+xcodebuild test -scheme SpeedTestPackage-Package -destination 'platform=macOS' -skipMacroValidation \
+  -only-testing:SpeedTestKitTests/TransferMeterTests
 
 # Package tests on the iOS simulator (run inside SpeedTestPackage/)
 xcodebuild test -scheme SpeedTestPackage-Package \
@@ -103,9 +107,25 @@ The tools are pinned in the `Mintfile`; `mint bootstrap` installs them.
 - `@State` only for plain view-local values, with the initial value at the declaration and never assigned in an
   `init` (in the iOS 27 SDK `@State` is a macro and that pattern doesn't compile).
 - Sub-views as `private var x: some View` or small structs; `#Preview` for previews.
-- Every `Text` with a literal string passes `bundle: .module`; numbers built in code use `Text(verbatim:)`.
+- Strings: see **Localization** below. Numbers built in code use `Text(verbatim:)`.
 - Accessibility identifiers: `startStopButton`, `serverField`, `pingField`, `downloadField`, `uploadField`,
   `phaseLabel`, `bigNumber`.
+
+**Localization** (English, the default, and Czech)
+- Every user-facing string lives in its module's String Catalog, `Resources/Localizable.xcstrings` (format 1.1,
+  processed in `Package.swift`), under a stable key named `area.meaning` (`ping.noReply`, `phase.downloading`),
+  never the English text. Each key has a translator comment and both an `en` and a `cs` translation; add both in the
+  same change as the code that uses it.
+- Use the generated symbols, never string literals: `Text(.pingNoReply)` in views, `String(localized: .pingNoReply)`
+  where a `String` is needed, `LocalizedStringResource` to pass text around (a reducer's `AlertState`, say). The
+  symbols are internal to their module, so each module localizes its own strings.
+- Values inside a sentence go into the key as arguments (`results.count` → `%lld results`); plurals use the
+  catalog's plural variants (Czech has one, few and other), not `if` statements.
+- Numbers, dates and durations use `FormatStyle` in the user's locale; units are SI symbols ("ms", "s", "km") and
+  "Mbps". Functions that format take `locale: Locale = .current`, and tests pin the locale.
+- The app target's `InfoPlist.xcstrings` translates the location permission texts and the display name.
+- Tests that check a translation set `resource.locale` on the `LocalizedStringResource`:
+  `String(localized:bundle:locale:)` ignores that locale when it picks the language.
 
 **Tests**
 - Swift Testing: `@MainActor @Suite struct XTests`, exhaustive `TestStore`.

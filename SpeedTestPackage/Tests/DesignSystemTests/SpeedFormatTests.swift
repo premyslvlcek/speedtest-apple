@@ -85,4 +85,10 @@ import Testing
         #expect(SpeedFormat.mbps(12.35, locale: czech) == "12,4")
         #expect(SpeedFormat.distance(meters: 400, locale: czech) == "0,4 km")
     }
+
+    @Test func noReplyIsTranslated() {
+        let czech = Locale(identifier: "cs_CZ")
+
+        #expect(SpeedFormat.pingSummary(milliseconds: nil, received: 0, sent: 5, locale: czech) == "bez odpovědi")
+    }
 }

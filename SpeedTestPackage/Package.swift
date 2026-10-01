@@ -57,6 +57,7 @@ let package = Package(
         ),
         .target(
             name: "DesignSystem",
+            resources: [.process("Resources")],
             swiftSettings: swiftSettings
         ),
         .target(

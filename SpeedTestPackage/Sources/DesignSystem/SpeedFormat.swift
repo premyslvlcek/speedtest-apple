@@ -44,7 +44,9 @@ public enum SpeedFormat {
         locale: Locale = .current
     ) -> String {
         guard received > 0 else {
-            return "no reply"
+            var noReply = LocalizedStringResource.pingNoReply
+            noReply.locale = locale
+            return String(localized: noReply)
         }
 
         let value = ping(milliseconds: milliseconds, locale: locale)
