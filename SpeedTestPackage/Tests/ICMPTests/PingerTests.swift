@@ -20,9 +20,13 @@ import Testing
         let isOpened = OSAllocatedUnfairLock(initialState: false)
         let sent = OSAllocatedUnfairLock<[UInt16]>(initialState: [])
         let isClosed = OSAllocatedUnfairLock(initialState: false)
+        /// Each sequence number as its request goes out, so a test can wait for a send instead of polling.
+        let sends: AsyncStream<UInt16>
+        private let sendsContinuation: AsyncStream<UInt16>.Continuation
         let answer: @Sendable (EchoMessage) -> EchoMessage?
 
         init(answer: @escaping @Sendable (EchoMessage) -> EchoMessage? = { $0 }) {
+            (sends, sendsContinuation) = AsyncStream.makeStream()
             self.answer = answer
         }
 
@@ -36,6 +40,7 @@ import Testing
                         }
 
                         self.sent.withLock { $0.append(request.sequence) }
+                        self.sendsContinuation.yield(request.sequence)
 
                         guard let reply = self.answer(request) else {
                             return
@@ -176,9 +181,8 @@ import Testing
         )
 
         let ping = Task { await pinger.ping(.standard) }
-        while socket.sent.withLock({ $0 }).isEmpty {
-            await Task.yield()
-        }
+        var sends = socket.sends.makeAsyncIterator()
+        _ = await sends.next()
         ping.cancel()
         let result = await ping.value
 
