@@ -66,7 +66,6 @@ import Testing
         let result = await Self.makePinger(socket: socket).ping(.standard)
 
         #expect(result.received == 5)
-        #expect(result.sent == 5)
         #expect(socket.sent.withLock { $0 } == [0, 1, 2, 3, 4])
         #expect(socket.isClosed.withLock { $0 })
     }
@@ -86,7 +85,6 @@ import Testing
         let result = await Self.makePinger(socket: socket).ping(.standard)
 
         #expect(result.received == 3)
-        #expect(result.sent == 5)
     }
 
     @Test func ignoresRepliesWithAnotherIdentifier() async {

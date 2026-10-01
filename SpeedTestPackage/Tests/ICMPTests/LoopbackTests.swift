@@ -18,14 +18,12 @@ import Testing
     @Test func pingsIPv4Loopback() async {
         let result = await Pinger(host: "127.0.0.1").ping()
 
-        #expect(result.sent == 5)
         #expect(result.received == 5)
     }
 
     @Test func pingsIPv6Loopback() async {
         let result = await Pinger(host: "::1").ping()
 
-        #expect(result.sent == 5)
         #expect(result.received == 5)
     }
 

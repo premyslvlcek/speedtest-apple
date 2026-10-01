@@ -103,6 +103,9 @@ The tools are pinned in the `Mintfile`; `mint bootstrap` installs them.
 - Actions sent and received by key path: `store.send(\.view.startStopTapped)`.
 - `TestClock`/`ImmediateClock` for time, `LockIsolated` for capturing calls.
 - Snapshot tests run locally only (references are recorded on one machine); CI skips them.
+- Every test and every assertion must be able to fail for a plausible bug in this repository's code. No
+  tautologies: don't restate a literal or a one-line computed property, don't test the standard library or a
+  dependency, and don't round-trip our own encoder and decoder when fixtures already pin both directions.
 
 **Style**
 - The file header on every file:

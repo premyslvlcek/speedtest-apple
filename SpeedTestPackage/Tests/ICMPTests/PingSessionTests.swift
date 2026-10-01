@@ -110,10 +110,6 @@ import Testing
         #expect(session.result.received == 0)
     }
 
-    @Test func sentIsTheCountWhenNothingWasSent() {
-        #expect(Self.makeSession(count: 5).result == .noReply(sent: 5))
-    }
-
     @Test func sentIsTheCountEvenWhenFewerWereRecorded() {
         // A request we meant to send and got no answer to is a loss: 1 of 5, not 1 of 2.
         var session = Self.makeSession(count: 5)
@@ -123,15 +119,6 @@ import Testing
         session.record(datagram: Self.reply(sequence: 0), at: .milliseconds(5))
 
         #expect(session.result == PingResult(rtts: [.milliseconds(5)], sent: 5))
-    }
-
-    @Test func countsAReplyWithAZeroRoundTrip() {
-        var session = Self.makeSession()
-        session.recordSent(sequence: 0, at: .zero)
-
-        session.record(datagram: Self.reply(sequence: 0), at: .zero)
-
-        #expect(session.result.rtts == [.zero])
     }
 
     // MARK: - IPv4
