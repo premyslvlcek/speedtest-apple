@@ -32,8 +32,6 @@ final class FakeTransfer: Sendable {
     let bytesPerRead: Int64
     /// `isAlive()` returns false once `totalBytes()` has been read this many times. nil means always alive.
     let aliveForReads: Int?
-    /// Called with n on the n-th `totalBytes()` read, before it returns.
-    let onRead: @Sendable (Int) -> Void
     private let state = LockIsolated(State())
     private let cancellations: AsyncStream<Void>.Continuation
     /// Yields once for every `cancel()` call.
@@ -43,18 +41,12 @@ final class FakeTransfer: Sendable {
         firstByte: FirstByte = .immediate,
         // 1.25 MB per read: at the standard sample interval, a steady 40 Mbps.
         bytesPerRead: Int64 = 1_250_000,
-        aliveForReads: Int? = nil,
-        onRead: @escaping @Sendable (Int) -> Void = { _ in }
+        aliveForReads: Int? = nil
     ) {
         self.firstByteBehavior = firstByte
         self.bytesPerRead = bytesPerRead
         self.aliveForReads = aliveForReads
-        self.onRead = onRead
         (cancelled, cancellations) = AsyncStream.makeStream()
-    }
-
-    var reads: Int {
-        state.value.reads
     }
 
     var cancelCount: Int {
@@ -92,7 +84,6 @@ final class FakeTransfer: Sendable {
             $0.reads += 1
             return $0.reads
         }
-        onRead(count)
         return Int64(count) * bytesPerRead
     }
 

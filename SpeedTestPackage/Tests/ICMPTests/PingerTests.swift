@@ -130,11 +130,12 @@ import TestSupport
         let socket = FakeSocket()
         let pinger = Self.makePinger(socket: socket)
 
-        let ping = Task {
-            withUnsafeCurrentTask { $0?.cancel() }
-            return await pinger.ping(.standard)
+        // A task added to a cancelled group starts cancelled.
+        let result = await withTaskGroup(of: PingResult.self) { group in
+            group.cancelAll()
+            group.addTask { await pinger.ping(.standard) }
+            return await group.next()
         }
-        let result = await ping.value
 
         #expect(result == .noReply(sent: 5))
         #expect(!socket.isOpened.withLock { $0 })
@@ -151,11 +152,13 @@ import TestSupport
             openSocket: socket.opener
         )
 
-        let ping = Task { await pinger.ping(.standard) }
-        var sends = socket.sends.makeAsyncIterator()
-        _ = await sends.next()
-        ping.cancel()
-        let result = await ping.value
+        let result = await withTaskGroup(of: PingResult.self) { group in
+            group.addTask { await pinger.ping(.standard) }
+            var sends = socket.sends.makeAsyncIterator()
+            _ = await sends.next()
+            group.cancelAll()
+            return await group.next()
+        }
 
         #expect(result == .noReply(sent: 5))
         #expect(socket.sent.withLock { $0 } == [0])

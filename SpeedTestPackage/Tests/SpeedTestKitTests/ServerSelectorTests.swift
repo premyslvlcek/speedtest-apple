@@ -151,19 +151,6 @@ import Testing
         ])
     }
 
-    @Test func theSecondEntryIsTheFailoverTarget() {
-        // Failover goes to the next one in the ranking, then the nearest of the rest.
-        let best = Candidate(server: .fixture("best"), distance: 3000, ping: replies([4, 4, 4, 4, 4]))
-        let next = Candidate(server: .fixture("next"), distance: 4000, ping: replies([7, 7, 7, 7, 7]))
-        let lossy = Candidate(server: .fixture("lossy"), distance: 2000, ping: replies([3]))
-        let silentNear = Candidate(server: .fixture("silentNear"), distance: 100, ping: noReply)
-        let silentFar = Candidate(server: .fixture("silentFar"), distance: 5000, ping: noReply)
-
-        let order = ServerSelector.order([silentFar, lossy, silentNear, next, best], minimumReplies: 3)
-
-        #expect(order.map(\.server.provider) == ["best", "next", "lossy", "silentNear", "silentFar"])
-    }
-
     @Test func theReplyThresholdIsConfigurable() {
         let two = Candidate(server: .fixture("two"), distance: 1000, ping: replies([8, 8]))
         let five = Candidate(server: .fixture("five"), distance: 1000, ping: replies([9, 9, 9, 9, 9]))

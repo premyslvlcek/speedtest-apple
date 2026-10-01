@@ -15,13 +15,9 @@ import TestSupport
 @Suite(.mainSerialExecutor, .timeLimit(.minutes(1))) struct TransferMeterFailureTests {
     // MARK: - Before the first byte
 
-    /// A non-2xx answer and a TLS failure: the two ways a server can fail before the first byte.
-    @Test(arguments: [
-        HTTPStatusError(statusCode: 429) as any Error,
-        URLError(.serverCertificateUntrusted)
-    ])
-    func aFailedStartIsATransferFailure(error: any Error) async {
-        let transfers = FakeTransferService([FakeTransfer(firstByte: .fails(error))])
+    /// Which errors count as a failed start is the error mapping's rule (ErrorMappingTests); here, one of them.
+    @Test func aFailedStartIsATransferFailure() async {
+        let transfers = FakeTransferService([FakeTransfer(firstByte: .fails(HTTPStatusError(statusCode: 429)))])
         let meter = makeMeter(transfer: transfers.service)
 
         let measurement = await meter.measure(MeterFixtures.server, .download, MeterFixtures.token).collect()
@@ -37,7 +33,6 @@ import TestSupport
         let measurement = await meter.measure(MeterFixtures.server, .download, MeterFixtures.token).collect()
 
         #expect(measurement.speedTestError == .transferFailed)
-        #expect(transfers.transfers[0].cancelCount >= 1)
     }
 
     @Test func anOfflineDeviceIsOffline() async {

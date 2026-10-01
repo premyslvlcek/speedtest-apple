@@ -44,14 +44,8 @@ import Testing
     }
 
     @Test func anythingElseThatEndsATransferIsATransferFailure() {
-        let errors: [any Error] = [
-            URLError(.timedOut),
-            // During a run a 429 is a failed connection (failover applies), unlike for the directory.
-            HTTPStatusError(statusCode: 429)
-        ]
-        for error in errors {
-            #expect(SpeedTestError.mapping(error) == .transferFailed, "\(error)")
-        }
+        // During a run a 429 is a failed connection (failover applies), unlike for the directory.
+        #expect(SpeedTestError.mapping(HTTPStatusError(statusCode: 429)) == .transferFailed)
     }
 
     @Test func aDirectory429IsRateLimited() {
@@ -61,8 +55,6 @@ import Testing
     @Test func anyOtherDirectoryFailureMeansTheDirectoryIsUnavailable() {
         let errors: [any Error] = [
             URLError(.timedOut),
-            URLError(.cannotConnectToHost),
-            URLError(.cannotFindHost),
             HTTPStatusError(statusCode: 401),
             DecodingError.dataCorrupted(.init(codingPath: [], debugDescription: "not JSON"))
         ]

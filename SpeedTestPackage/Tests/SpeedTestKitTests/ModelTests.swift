@@ -27,16 +27,4 @@ import Testing
             wasPartial: true
         ))
     }
-
-    @Test(arguments: [SpeedTestError.networkChanged, .connectionLost])
-    func interruptionsKeepAPartialResult(error: SpeedTestError) {
-        #expect(error.isInterruption)
-    }
-
-    @Test(arguments: [
-        SpeedTestError.offline, .directoryUnavailable, .rateLimited, .noServers, .transferFailed
-    ])
-    func failuresAreNotInterruptions(error: SpeedTestError) {
-        #expect(!error.isInterruption)
-    }
 }

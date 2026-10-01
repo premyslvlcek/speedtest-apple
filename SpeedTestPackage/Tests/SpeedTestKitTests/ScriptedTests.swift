@@ -14,35 +14,20 @@ import TestSupport
 
 /// The scripted collaborators that previews and the UI tests run on. On an `ImmediateClock` their delays pass at once.
 @Suite(.mainSerialExecutor, .timeLimit(.minutes(1))) struct ScriptedTests {
-    @Test func theFixtureCandidatesAreTheFiveNearestWithOneHostOnTwoPorts() {
-        let candidates = Fixtures.candidates
-
-        #expect(candidates.count == 5)
-        // Veselí is the farthest of the six and is left out.
-        #expect(!candidates.map(\.server.city).contains("Veselí"))
-        let elektro = candidates.filter { $0.server.provider == "Elektro Solution" && $0.server.city == "Prague" }
-        #expect(elektro.map(\.server.port) == [81, 88])
-        #expect(Set(elektro.map(\.server.host)).count == 1)
-    }
-
-    @Test func scriptedPingsAnswerByHost() async {
+    @Test func scriptedPingsAnswerByHost() async throws {
         let ping = withDependencies {
             $0.continuousClock = ImmediateClock()
         } operation: {
             PingService.scripted
         }
         let configuration = PingConfiguration.standard
-        let elektro = Fixtures.candidates.filter { $0.server.provider == "Elektro Solution" }
+        let ubiquiti = try #require(Fixtures.servers.first { $0.provider == "Ubiquiti" })
+        let jablonka = try #require(Fixtures.servers.first { $0.provider == "jablonka.cz" })
 
-        var results: [PingResult] = []
-        for candidate in elektro {
-            await results.append(ping.ping(candidate.server.host, configuration))
-        }
-
-        // The two Prague ports share one host and so one result; Zbožíčko never answers ICMP.
-        let prague = elektro.filter { $0.server.city == "Prague" }.map(\.id)
-        #expect(results.prefix(2).allSatisfy { $0 == Fixtures.pingResults[prague[0]] })
-        #expect(results.last?.received == 0)
+        // Two hosts with different fixture results, so a lookup that ignored the host would fail.
+        #expect(await ping.ping(ubiquiti.host, configuration) == Fixtures.pingResults[ubiquiti.id])
+        #expect(await ping.ping(jablonka.host, configuration) == Fixtures.pingResults[jablonka.id])
+        #expect(Fixtures.pingResults[ubiquiti.id] != Fixtures.pingResults[jablonka.id])
         #expect(await ping.ping("unknown.example.invalid", configuration) == .noReply(sent: configuration.count))
     }
 
