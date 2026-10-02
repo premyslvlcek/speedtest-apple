@@ -16,9 +16,9 @@ lowest latency. SwiftUI and The Composable Architecture (TCA) on top of a small 
   - `SpeedTestKit`: the dependency clients of a run, the transfer meter and the pure rules (server
     selection, throughput sampling, error mapping). No UI and no TCA.
   - `DesignSystem`: formatting, colors, button and card styles, the speed chart. Takes plain values.
-  - `HistoryFeature`: past results in SQLite through SQLiteData, with a reducer and a list.
+  - `HistoryFeature`: past results in SQLite through SQLiteData, with a reducer and a list. Not built yet.
   - `SpeedTestFeature`: the reducer that drives a run step by step, and the screen.
-- `SpeedTestUITests/`: two XCUITest smoke tests against a scripted run.
+- `SpeedTestUITests/` (not built yet): two XCUITest smoke tests against a scripted run.
 - `docs/DESIGN.md`: the technical design.
 
 ## Build and test
@@ -111,7 +111,7 @@ The tools are pinned in the `Mintfile`; `mint bootstrap` installs them.
 - Sub-views as `private var x: some View` or small structs; `#Preview` for previews.
 - Strings: see **Localization** below. Numbers built in code use `Text(verbatim:)`.
 - Accessibility identifiers: `startStopButton`, `serverField`, `pingField`, `downloadField`, `uploadField`,
-  `phaseLabel`, `bigNumber`.
+  `phaseLabel`, `bigNumber`, `uploadToggle`.
 
 **Localization** (English, the default, and Czech)
 - Every user-facing string lives in its module's String Catalog, `Resources/Localizable.xcstrings` (format 1.1,
@@ -176,3 +176,16 @@ The tools are pinned in the `Mintfile`; `mint bootstrap` installs them.
 - Plain messages: no `Co-Authored-By` trailers, no session links, no "Generated with" lines.
 - Claude Code doesn't commit, push, tag or create repositories here. It leaves its changes in the working tree,
   shows `git status` and `git diff --stat`, and the maintainer reviews and commits.
+
+## Where decisions are written down
+
+- `README.md`: what the app does, how to run it, and the main trade-offs.
+- `docs/DESIGN.md`: the test flow and its rules, the throughput contract, concurrency, the screen states, errors and
+  testing. Change the code and this document together.
+
+## Before calling something done
+
+- The package tests pass on macOS and on the iOS simulator, and the app builds for iOS and macOS (commands above).
+- `./swiftformat.sh && ./swiftlint.sh` are clean.
+- New user-facing strings have an `en` and a `cs` translation.
+- Snapshot tests pass locally if a view changed; re-record only on purpose, and look at the new images.
