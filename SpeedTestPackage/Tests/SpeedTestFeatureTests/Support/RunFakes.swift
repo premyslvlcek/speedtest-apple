@@ -26,13 +26,16 @@ enum RunFakes {
         let tokenCalls = LockIsolated(0)
         private let servers: Result<[Server], any Error>
         private let tokenResult: Result<TransferToken, any Error>
+        private let clientIPResult: Result<ClientIP, any Error>
 
         init(
             servers: Result<[Server], any Error> = .success(Fixtures.servers),
-            token: Result<TransferToken, any Error> = .success(RunFakes.token)
+            token: Result<TransferToken, any Error> = .success(RunFakes.token),
+            clientIP: Result<ClientIP, any Error> = .success(Fixtures.clientIP)
         ) {
             self.servers = servers
             tokenResult = token
+            clientIPResult = clientIP
         }
 
         var client: ServerDirectory {
@@ -44,6 +47,9 @@ enum RunFakes {
                 token: {
                     self.tokenCalls.withValue { $0 += 1 }
                     return try self.tokenResult.get()
+                },
+                clientIP: {
+                    try self.clientIPResult.get()
                 }
             )
         }

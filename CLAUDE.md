@@ -16,7 +16,7 @@ lowest latency. SwiftUI and The Composable Architecture (TCA) on top of a small 
   - `SpeedTestKit`: the dependency clients of a run, the transfer meter and the pure rules (server
     selection, throughput sampling, error mapping). No UI and no TCA.
   - `DesignSystem`: formatting, colors, button and card styles, the speed chart. Takes plain values.
-  - `HistoryFeature`: past results in SQLite through SQLiteData, with a reducer and a list. Not built yet.
+  - `HistoryFeature`: past results in SQLite through SQLiteData, with a reducer and a sheet.
   - `SpeedTestFeature`: the reducer that drives a run step by step, and the screen.
 - `SpeedTestUITests/` (not built yet): two XCUITest smoke tests against a scripted run.
 - `docs/DESIGN.md`: the technical design.
@@ -111,7 +111,7 @@ The tools are pinned in the `Mintfile`; `mint bootstrap` installs them.
 - Sub-views as `private var x: some View` or small structs; `#Preview` for previews.
 - Strings: see **Localization** below. Numbers built in code use `Text(verbatim:)`.
 - Accessibility identifiers: `startStopButton`, `serverField`, `pingField`, `downloadField`, `uploadField`,
-  `phaseLabel`, `bigNumber`, `uploadToggle`.
+  `phaseLabel`, `bigNumber`, `uploadToggle`, `ipField`, `historyButton`.
 
 **Localization** (English, the default, and Czech)
 - Every user-facing string lives in its module's String Catalog, `Resources/Localizable.xcstrings` (format 1.1,

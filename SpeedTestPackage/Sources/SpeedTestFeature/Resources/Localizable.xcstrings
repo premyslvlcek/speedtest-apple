@@ -343,6 +343,24 @@
         }
       }
     },
+    "history.button" : {
+      "comment" : "Toolbar button that opens the list of past results.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Historie"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "History"
+          }
+        }
+      }
+    },
     "intro" : {
       "comment" : "Introduction shown before the first run.",
       "extractionState" : "manual",
@@ -357,6 +375,42 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Finds the 5 closest speed test servers, pings each one over ICMP, then measures download for 15 s and upload for 10 s on the fastest."
+          }
+        }
+      }
+    },
+    "ip.address" : {
+      "comment" : "The device's public IP address under the result card, when the provider is unknown.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vaše IP %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your IP %@"
+          }
+        }
+      }
+    },
+    "ip.addressWithProvider" : {
+      "comment" : "The device's public IP address under the result card, then its internet provider.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vaše IP %1$@ · %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your IP %1$@ · %2$@"
           }
         }
       }

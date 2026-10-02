@@ -13,6 +13,7 @@ import SwiftUI
 import Testing
 import TestSupport
 
+@testable import HistoryFeature
 @testable import SpeedTestFeature
 
 /// From Start to the chosen server: locate, fetch, ping each host once, choose, get the token. The selection rules
@@ -40,6 +41,9 @@ import TestSupport
         await store.receive(\.located) {
             $0.location = .located(Fixtures.prague)
             $0.phase = .fetchingServers
+        }
+        await store.receive(\.clientIPResponse.success) {
+            $0.clientIP = Fixtures.clientIP
         }
         await store.receive(\.serversResponse.success) {
             $0.candidates = IdentifiedArray(uniqueElements: candidates)
@@ -107,6 +111,9 @@ import TestSupport
             $0.location = .notAuthorized
             $0.phase = .fetchingServers
         }
+        await store.receive(\.clientIPResponse.success) {
+            $0.clientIP = Fixtures.clientIP
+        }
         await store.receive(\.serversResponse.success) {
             $0.candidates = [Candidate(server: server, distance: nil)]
             $0.phase = .pinging
@@ -165,8 +172,49 @@ import TestSupport
             $0.location = .located(Fixtures.prague)
             $0.phase = .fetchingServers
         }
+        await store.receive(\.clientIPResponse.success) {
+            $0.clientIP = Fixtures.clientIP
+        }
         await store.receive(\.serversResponse.success) {
             $0.phase = .failed(.noServers)
+        }
+    }
+
+    /// The address is extra information: a lookup that fails changes nothing and the run carries on.
+    @Test func aFailedIPLookupLeavesTheRunAlone() async {
+        let store = TestStore(initialState: SpeedTest.State()) {
+            SpeedTest()
+        } withDependencies: {
+            $0.locator = RunFakes.locator()
+            $0.serverDirectory = RunFakes.Directory(
+                servers: .success([]),
+                clientIP: .failure(SpeedTestError.directoryUnavailable)
+            ).client
+        }
+
+        await store.send(\.view.startStopTapped) {
+            $0.phase = .locating
+        }
+        await store.receive(\.located) {
+            $0.location = .located(Fixtures.prague)
+            $0.phase = .fetchingServers
+        }
+        await store.receive(\.clientIPResponse.failure)
+        await store.receive(\.serversResponse.success) {
+            $0.phase = .failed(.noServers)
+        }
+    }
+
+    @Test func historyOpensTheHistorySheet() async throws {
+        let database = try historyDatabase()
+        let store = TestStore(initialState: SpeedTest.State()) {
+            SpeedTest()
+        } withDependencies: {
+            $0.defaultDatabase = database
+        }
+
+        await store.send(\.view.historyTapped) {
+            $0.history = History.State()
         }
     }
 
@@ -185,6 +233,9 @@ import TestSupport
         await store.receive(\.located) {
             $0.location = .located(Fixtures.prague)
             $0.phase = .fetchingServers
+        }
+        await store.receive(\.clientIPResponse.success) {
+            $0.clientIP = Fixtures.clientIP
         }
         await store.receive(\.serversResponse.failure) {
             $0.phase = .failed(.rateLimited)

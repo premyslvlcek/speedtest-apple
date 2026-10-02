@@ -6,6 +6,8 @@
 //
 
 import ComposableArchitecture
+import Foundation
+import HistoryFeature
 import SpeedTestKit
 
 extension SpeedTest.State {
@@ -88,5 +90,24 @@ extension SpeedTest.State {
         }
 
         phase = .interrupted(reason)
+    }
+}
+
+extension SpeedTest.State {
+    /// What the history keeps of this run: the server, the ping, both averages and the address.
+    func historyEntry(date: Date) -> HistoryEntry.Draft? {
+        guard let server = selection?.server, let download else {
+            return nil
+        }
+        return HistoryEntry.Draft(
+            recordedAt: date,
+            serverProvider: server.provider,
+            serverCity: server.city,
+            pingMilliseconds: selection?.ping?.median?.inMilliseconds,
+            downloadMbps: download.averageMbps,
+            uploadMbps: upload?.averageMbps,
+            ipAddress: clientIP?.address,
+            ipProvider: clientIP?.provider
+        )
     }
 }

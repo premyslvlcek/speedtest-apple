@@ -64,6 +64,17 @@ import Testing
         #expect(request.url?.query() == nil)
     }
 
+    @Test func clientIPReadsTheAddressAndTheProvider() async throws {
+        let (directory, requests) = try Self.recordingDirectory(answering: "client-ip")
+
+        let clientIP = try await directory.clientIP()
+
+        #expect(clientIP == ClientIP(address: "203.0.113.7", provider: "Example Networks a.s."))
+        let request = try #require(requests.value.first)
+        #expect(request.httpMethod == "GET")
+        #expect(request.url?.path() == "/api/v1/ip")
+    }
+
     @Test(arguments: directoryFailures)
     func fetchFailuresFollowTheErrorTable(outcome: StubOutcome, expected: SpeedTestError) async {
         let stub = StubURLProtocol.make { _ in outcome }

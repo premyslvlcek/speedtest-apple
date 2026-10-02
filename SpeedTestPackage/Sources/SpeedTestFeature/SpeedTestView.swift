@@ -7,6 +7,7 @@
 
 import ComposableArchitecture
 import DesignSystem
+import HistoryFeature
 import SwiftUI
 
 #if os(iOS)
@@ -24,6 +25,15 @@ public struct SpeedTestView: View {
     }
 
     public var body: some View {
+        NavigationStack {
+            screen
+        }
+        .sheet(item: $store.scope(\.history, action: \.history)) { historyStore in
+            HistoryView(store: historyStore)
+        }
+    }
+
+    private var screen: some View {
         List {
             Section {
                 MeasurementPanel(store: store) {
@@ -55,27 +65,45 @@ public struct SpeedTestView: View {
         #else
         .listStyle(.inset)
         #endif
-        .safeAreaInset(edge: .bottom) {
-            StartStopButton(title: store.buttonTitle, action: buttonTapped)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(.bar)
-        }
-        .onChange(of: scenePhase) { _, newValue in
-            send(.scenePhaseChanged(newValue))
-        }
-        .onChange(of: store.phase) { _, newValue in
-            announceIfFinished(newValue)
-        }
-        .sensoryFeedback(.success, trigger: store.phase) { _, newValue in
-            newValue == .finished
-        }
+        .navigationTitle(Text(.appTitle))
         #if os(iOS)
-        .onChange(of: store.isRunning) { _, isRunning in
-            // Keep the screen awake during a test. Not `initial: true`: the view is rendered in
-            // snapshot tests, which have no UIApplication, and at launch nothing is running anyway.
-            UIApplication.shared.isIdleTimerDisabled = isRunning
-        }
+            .navigationBarTitleDisplayMode(.inline)
+        #endif
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        send(.historyTapped)
+                    } label: {
+                        Label {
+                            Text(.historyButton)
+                        } icon: {
+                            Image(systemName: "clock.arrow.circlepath")
+                        }
+                    }
+                    .accessibilityIdentifier("historyButton")
+                }
+            }
+            .safeAreaInset(edge: .bottom) {
+                StartStopButton(title: store.buttonTitle, action: buttonTapped)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(.bar)
+            }
+            .onChange(of: scenePhase) { _, newValue in
+                send(.scenePhaseChanged(newValue))
+            }
+            .onChange(of: store.phase) { _, newValue in
+                announceIfFinished(newValue)
+            }
+            .sensoryFeedback(.success, trigger: store.phase) { _, newValue in
+                newValue == .finished
+            }
+        #if os(iOS)
+            .onChange(of: store.isRunning) { _, isRunning in
+                // Keep the screen awake during a test. Not `initial: true`: the view is rendered in
+                // snapshot tests, which have no UIApplication, and at launch nothing is running anyway.
+                UIApplication.shared.isIdleTimerDisabled = isRunning
+            }
         #endif
     }
 

@@ -7,6 +7,7 @@
 
 import ComposableArchitecture
 import DesignSystem
+import SpeedTestKit
 import SwiftUI
 
 /// Phase label, big number, the four result fields and the inline notes.
@@ -55,6 +56,10 @@ struct MeasurementPanel: View {
                         accessibilityIdentifier: "uploadField"
                     )
                 }
+            }
+
+            if let clientIP = store.clientIP {
+                ClientIPLine(clientIP: clientIP)
             }
 
             if store.notes.contains(.icmpBlocked) {
@@ -215,5 +220,27 @@ private struct MessageView: View {
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(tint.opacity(0.12)))
+    }
+}
+
+/// The public address the run started from, quietly under the card.
+private struct ClientIPLine: View {
+    let clientIP: ClientIP
+
+    var body: some View {
+        text
+            .font(.footnote)
+            .foregroundStyle(Palette.secondaryText)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal)
+            .accessibilityIdentifier("ipField")
+    }
+
+    private var text: Text {
+        if let provider = clientIP.provider {
+            Text(.ipAddressWithProvider(clientIP.address, provider))
+        } else {
+            Text(.ipAddress(clientIP.address))
+        }
     }
 }

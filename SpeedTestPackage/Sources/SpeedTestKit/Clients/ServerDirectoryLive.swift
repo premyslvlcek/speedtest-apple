@@ -25,12 +25,13 @@ public extension ServerDirectory {
         let client = DirectoryHTTPClient(session: session, baseURL: baseURL, timeout: timeout)
         return ServerDirectory(
             fetch: { near in try await client.servers(near: near) },
-            token: { try await client.token() }
+            token: { try await client.token() },
+            clientIP: { try await client.clientIP() }
         )
     }
 }
 
-/// The two requests and their error rules.
+/// The directory's requests and their error rules.
 struct DirectoryHTTPClient: Sendable {
     let session: URLSession
     let baseURL: URL
@@ -54,6 +55,12 @@ struct DirectoryHTTPClient: Sendable {
 
         let data = try await send(request)
         let dto = try decoded { try JSONDecoder().decode(TokenDTO.self, from: data) }
+        return dto.toDomainModel()
+    }
+
+    func clientIP() async throws -> ClientIP {
+        let data = try await send(request(baseURL.appending(path: "api/v1/ip"), method: "GET"))
+        let dto = try decoded { try JSONDecoder().decode(ClientIPDTO.self, from: data) }
         return dto.toDomainModel()
     }
 
