@@ -5,5 +5,6 @@
   {"url": "http://86.54.82.199:80", "latitude": 50.08, "longitude": 14.46, "provider": "PlainHTTP", "city": "Prague", "country": "Czechia", "countryCode": "CZ", "speedMbps": 1000},
   {"url": "https://alpha.wifiman.me:80", "latitude": 50.09, "longitude": 14.43, "provider": "AlphaAgain", "city": "Prague", "country": "Czechia", "countryCode": "CZ", "speedMbps": 1000},
   null,
+  {"url": "https://speedtest.wifiman.me.example.com:443", "latitude": 50.08, "longitude": 14.42, "provider": "Elsewhere", "city": "Prague", "country": "Czechia", "countryCode": "CZ", "speedMbps": 1000},
   {"url": "https://beta.wifiman.me:4780", "latitude": 49.19, "longitude": 16.61, "provider": "Beta", "city": "Brno", "country": "Czechia", "countryCode": "CZ", "speedMbps": 10000}
 ]

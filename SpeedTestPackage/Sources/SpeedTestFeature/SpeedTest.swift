@@ -10,7 +10,6 @@ import Foundation
 import HistoryFeature
 import ICMP
 import SpeedTestKit
-import SQLiteData
 import SwiftUI
 
 /// The one screen: Start/Stop, the live measurement and the closest servers. The reducer drives the run itself,
@@ -102,7 +101,7 @@ public struct SpeedTest: Sendable {
     static let configuration = SpeedTestConfiguration.standard
 
     @Dependency(\.date.now) var now
-    @Dependency(\.defaultDatabase) var database
+    @Dependency(\.historyClient) var historyClient
     @Dependency(\.locator) var locator
     @Dependency(\.openURL) var openURL
     @Dependency(\.pingService) var pingService

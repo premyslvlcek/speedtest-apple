@@ -26,20 +26,21 @@ import Testing
         #expect(request.value(forHTTPHeaderField: "Accept") == "application/json")
         #expect(Self.queryItems(of: request) == [
             URLQueryItem(name: "secured", value: "only"),
-            URLQueryItem(name: "latitude", value: "50.0755"),
-            URLQueryItem(name: "longitude", value: "14.4378")
+            URLQueryItem(name: "latitude", value: "50.08"),
+            URLQueryItem(name: "longitude", value: "14.44")
         ])
     }
 
-    @Test func theCoordinateIsSentWithFourDecimalsNeverInScientificNotation() async throws {
+    /// Two decimals is about 1 km: enough to pick servers, and no more of the device's position than that.
+    @Test func theCoordinateIsSentWithTwoDecimalsNeverInScientificNotation() async throws {
         let (directory, requests) = try Self.recordingDirectory(answering: "servers")
 
         _ = try await directory.fetch(near: Coordinate(latitude: 0.00001, longitude: -0.123456))
 
         let request = try #require(requests.value.first)
         #expect(Self.queryItems(of: request).dropFirst() == [
-            URLQueryItem(name: "latitude", value: "0.0000"),
-            URLQueryItem(name: "longitude", value: "-0.1235")
+            URLQueryItem(name: "latitude", value: "0.00"),
+            URLQueryItem(name: "longitude", value: "-0.12")
         ])
     }
 

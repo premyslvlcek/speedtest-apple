@@ -39,7 +39,8 @@ import Testing
 
     @Test func keepsOnlyTheUsableEntries() throws {
         // servers-mixed.json, in order: Alpha (usable), an entry without `city`, a `null` latitude, a plain `http`
-        // URL, Alpha's URL again, a `null` element, Beta (usable). One bad entry must not cost the whole list.
+        // URL, Alpha's URL again, a `null` element, an `https` host that only looks like wifiman.me, Beta (usable). One bad entry
+        // must not cost the whole list.
         let servers = try ServerDTO.servers(from: Fixture.data("servers-mixed"))
 
         #expect(servers.map(\.provider) == ["Alpha", "Beta"])

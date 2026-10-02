@@ -6,10 +6,14 @@
 //
 
 import Clocks
+import ComposableArchitecture
 import ConcurrencyExtras
 import Foundation
+import HistoryFeature
 import ICMP
 import SpeedTestKit
+
+@testable import SpeedTestFeature
 
 /// Dependency clients for a run, built per test. Each answers at once, so with `TestStore`'s serial executor
 /// the actions arrive in a fixed order: one `pinged` per distinct host, in candidate order.
@@ -52,6 +56,24 @@ enum RunFakes {
                     try self.clientIPResult.get()
                 }
             )
+        }
+    }
+
+    /// Records every entry a finished run saves.
+    final class History: Sendable {
+        private let entries = LockIsolated<[HistoryEntry.Draft]>([])
+
+        var client: HistoryClient {
+            HistoryClient(save: { entry in
+                self.entries.withValue { $0.append(entry) }
+            })
+        }
+
+        /// What was saved, once the store's effects have finished: the save runs in an effect, after the action
+        /// that finishes the run.
+        func saved(_ store: TestStoreOf<SpeedTest>) async -> [HistoryEntry.Draft] {
+            await store.finish()
+            return entries.value
         }
     }
 

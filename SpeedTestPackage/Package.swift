@@ -62,7 +62,7 @@ let package = Package(
         ),
         .target(
             name: "HistoryFeature",
-            dependencies: ["DesignSystem", composableArchitecture, sqliteData],
+            dependencies: ["DesignSystem", composableArchitecture, sqliteData, dependencies, dependenciesMacros],
             resources: [.process("Resources")],
             swiftSettings: swiftSettings
         ),
@@ -73,8 +73,7 @@ let package = Package(
                 "DesignSystem",
                 "SpeedTestKit",
                 "ICMP",
-                composableArchitecture,
-                sqliteData
+                composableArchitecture
             ],
             resources: [.process("Resources")],
             swiftSettings: swiftSettings

@@ -9,7 +9,6 @@ import ComposableArchitecture
 import HistoryFeature
 import ICMP
 import SpeedTestKit
-import SQLiteData
 import SwiftUI
 
 /// The steps of a run. Each handler updates the state and starts the next step's effect.
@@ -161,9 +160,7 @@ extension SpeedTest {
         }
         return .run { _ in
             await withErrorReporting {
-                try await database.write { db in
-                    try HistoryEntry.insert { entry }.execute(db)
-                }
+                try await historyClient.save(entry)
             }
         }
     }
