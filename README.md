@@ -159,6 +159,11 @@ server and the whole run takes about 30 s.
 reader can ignore: upload is a switch, history is a sheet behind a toolbar button, the IP is one quiet line, and the
 app runs on the Mac and in Czech too.
 
+**One screen, laid out for the window.** On iPhone it's one column. On iPad and the Mac it's two panes: the
+measurement and the button on the left, the upload switch and the servers on the right. The choice follows the size
+class, not the device, so iPad Split View gets the column and an open iPhone Duo would get the panes. The Mac also has a
+Test menu: Start/Stop on ⌘R, History on ⌘Y.
+
 **Errors inline, not in alerts.** Failures appear in plain words where the result would be, with Try again.
 Interruptions (Stop, the app going to the background on iOS, a network change, a lost connection) keep the partial
 average and say what happened.
@@ -204,11 +209,9 @@ address (203.0.113.7) instead of my own.
 - The upload number counts bytes handed to the network stack, which is what every client can see.
 - In approximate mode the servers are only as close as the directory's IP geolocation.
 - NAT64 is untested on a real IPv6-only network (see above).
-- On an iPhone the screen is one column. iPad and Mac show the same column for now.
 
 ## Future work
 
-- A two-pane layout on iPad and Mac, with a Test menu and ⌘R on the Mac.
 - Snapshot tests of every screen state.
 - Choosing a server by hand: tapping a row in the server list would run the test against it.
 

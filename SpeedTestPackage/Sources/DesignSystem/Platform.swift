@@ -54,3 +54,17 @@ import SwiftUI
         }
     }
 #endif
+
+public extension View {
+    /// The Start/Stop look: the capsule on iOS, a large prominent push button on the Mac.
+    @ViewBuilder
+    func startStopButtonStyle(_ role: CapsuleButtonStyle.Role) -> some View {
+        #if os(macOS)
+            buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .tint(role == .start ? Palette.download : Palette.error)
+        #else
+            buttonStyle(CapsuleButtonStyle(role: role))
+        #endif
+    }
+}

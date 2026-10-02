@@ -188,6 +188,11 @@ extension SpeedTest.State {
         return error
     }
 
+    /// What the button and the Mac's ⌘R do: Try again retries; every other title starts or stops a run.
+    var buttonAction: SpeedTest.Action.View {
+        buttonTitle == .tryAgain ? .retryTapped : .startStopTapped
+    }
+
     var buttonTitle: ButtonTitle {
         if isRunning {
             return .stop

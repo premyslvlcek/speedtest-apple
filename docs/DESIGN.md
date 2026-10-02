@@ -145,6 +145,10 @@ decimal. Ping in whole milliseconds, "<1 ms" below one. Numbers are formatted in
   measured. The rows show results; the live value is in the big number and the graph.
 - The "Measure upload too" switch sits below the card and is disabled during a run.
 - Start/Stop is pinned outside the scrolling content, so it's always in the same place.
+- **Layout:** one column in compact width (iPhone, iPad Split View); two panes in regular width (iPad, an open iPhone
+  Duo) and always on the Mac: the measurement and the button on the left, the upload switch and the servers on the
+  right. The rule reads the horizontal size class, not the device type. On the Mac the button is a large prominent
+  push button, and a Test menu has Start/Stop (⌘R) and History (⌘Y).
 - Under the card, one quiet line: "Your IP 203.0.113.7 · provider".
 - A History button in the toolbar opens a sheet with the finished runs, newest first: server, date, download (and
   upload), ping and the address. Swipe to delete a row; Clear asks first, then deletes them all. Done sits on the
