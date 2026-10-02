@@ -7,8 +7,10 @@
 
 import ComposableArchitecture
 import Foundation
+import HistoryFeature
 import ICMP
 import SpeedTestKit
+import SQLiteData
 import SwiftUI
 
 /// The one screen: Start/Stop, the live measurement and the closest servers. The reducer drives the run itself,
@@ -26,6 +28,9 @@ public struct SpeedTest: Sendable {
         public var download: TransferResult?
         public var upload: TransferResult?
         public var isUploadUnavailable = false
+        /// The public address this run started from, looked up on Start. `nil` until it answers, or if it can't.
+        public var clientIP: ClientIP?
+        @Presents public var history: History.State?
         /// Whether a run measures upload after the download. Off by default: the test is the 15 s download.
         /// Remembered across launches.
         @Shared(.appStorage("measuresUpload")) public var measuresUpload = false
@@ -72,6 +77,8 @@ public struct SpeedTest: Sendable {
     }
 
     public enum Action: ViewAction {
+        case clientIPResponse(Result<ClientIP, any Error>)
+        case history(PresentationAction<History.Action>)
         case located(LocationOutcome)
         case serversResponse(Result<[Server], any Error>)
         case pinged(host: String, PingResult)
@@ -83,6 +90,7 @@ public struct SpeedTest: Sendable {
 
         @CasePathable
         public enum View: Sendable {
+            case historyTapped
             case openSettingsTapped
             case retryTapped
             case scenePhaseChanged(ScenePhase)
@@ -93,6 +101,8 @@ public struct SpeedTest: Sendable {
 
     static let configuration = SpeedTestConfiguration.standard
 
+    @Dependency(\.date.now) var now
+    @Dependency(\.defaultDatabase) var database
     @Dependency(\.locator) var locator
     @Dependency(\.openURL) var openURL
     @Dependency(\.pingService) var pingService
@@ -104,6 +114,18 @@ public struct SpeedTest: Sendable {
     public var body: some Reducer<State, Action> {
         Reduce { state, action in
             switch action {
+            case let .clientIPResponse(.success(clientIP)):
+                state.clientIP = clientIP
+
+                return .none
+
+            case .clientIPResponse(.failure):
+                // The address is extra information: without it the run goes on and the line stays hidden.
+                return .none
+
+            case .history:
+                return .none
+
             case let .located(outcome):
                 return located(outcome, state: &state)
 
@@ -140,11 +162,14 @@ public struct SpeedTest: Sendable {
 
             case .transferResponse(.upload, .success):
                 state.finishUpload()
-
-                return .none
+                return saveIfFinished(state: state)
 
             case let .transferResponse(.upload, .failure(error)):
                 state.uploadFailed(error)
+                return saveIfFinished(state: state)
+
+            case .view(.historyTapped):
+                state.history = History.State()
 
                 return .none
 
@@ -178,11 +203,17 @@ public struct SpeedTest: Sendable {
                 return .cancel(id: SpeedTestId())
             }
         }
+        .ifLet(\.$history, action: \.history) {
+            History()
+        }
     }
 }
 
 /// Every effect of a run: Stop and the background cancel them all at once.
 struct SpeedTestId: Hashable, Sendable {}
+
+/// The address lookup that starts with each run. Not one of the run's effects: Stop lets it finish.
+struct ClientIPId: Hashable, Sendable {}
 
 extension SpeedTest {
     /// The app's own settings page on iOS; the Location Services privacy pane on macOS.

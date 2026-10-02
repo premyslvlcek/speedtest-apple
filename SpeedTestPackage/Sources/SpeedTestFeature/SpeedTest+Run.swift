@@ -6,8 +6,10 @@
 //
 
 import ComposableArchitecture
+import HistoryFeature
 import ICMP
 import SpeedTestKit
+import SQLiteData
 import SwiftUI
 
 /// The steps of a run. Each handler updates the state and starts the next step's effect.
@@ -18,10 +20,16 @@ extension SpeedTest {
         state.phase = .locating
         let timeout = Self.configuration.locationTimeout
 
-        return .run { send in
-            await send(.located(locator.locate(timeout)))
-        }
-        .cancellable(id: SpeedTestId(), cancelInFlight: true)
+        return .merge(
+            .run { send in
+                await send(.located(locator.locate(timeout)))
+            }
+            .cancellable(id: SpeedTestId(), cancelInFlight: true),
+            .run { send in
+                await send(.clientIPResponse(Result { try await serverDirectory.clientIP() }))
+            }
+            .cancellable(id: ClientIPId(), cancelInFlight: true)
+        )
     }
 
     func located(_ outcome: LocationOutcome, state: inout State) -> Effect<Action> {
@@ -117,8 +125,7 @@ extension SpeedTest {
         state.download = TransferResult(lastSample: last, wasPartial: false)
         guard state.measuresUpload else {
             state.phase = .finished
-
-            return .none
+            return saveIfFinished(state: state)
         }
 
         state.phase = .connecting(.upload)
@@ -145,6 +152,20 @@ extension SpeedTest {
         state.hasFailedOver = true
 
         return measureDownload(state: state)
+    }
+
+    /// A finished run goes into the history. A stopped, interrupted or failed one doesn't.
+    func saveIfFinished(state: State) -> Effect<Action> {
+        guard state.phase == .finished, let entry = state.historyEntry(date: now) else {
+            return .none
+        }
+        return .run { _ in
+            await withErrorReporting {
+                try await database.write { db in
+                    try HistoryEntry.insert { entry }.execute(db)
+                }
+            }
+        }
     }
 
     /// One measurement: a `sampled` action per sample, then `transferResponse` when the stream ends.

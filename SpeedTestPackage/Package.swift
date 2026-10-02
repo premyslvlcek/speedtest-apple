@@ -103,13 +103,14 @@ let package = Package(
         ),
         .testTarget(
             name: "HistoryFeatureTests",
-            dependencies: ["HistoryFeature", dependenciesTestSupport],
+            dependencies: ["HistoryFeature", "TestSupport", composableArchitecture, sqliteData, dependenciesTestSupport],
             swiftSettings: swiftSettings
         ),
         .testTarget(
             name: "SpeedTestFeatureTests",
             dependencies: [
                 "SpeedTestFeature",
+                "HistoryFeature",
                 "SpeedTestKit",
                 "ICMP",
                 "TestSupport",

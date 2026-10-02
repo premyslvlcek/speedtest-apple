@@ -10,8 +10,8 @@ import DependenciesMacros
 
 /// Ubiquiti's server directory at `sp-dir.uwn.com`.
 ///
-/// Both endpoints throw a `SpeedTestError` (`.offline`, `.rateLimited` or `.directoryUnavailable`), or
-/// `CancellationError` when the run was stopped. Neither is ever retried automatically.
+/// Every endpoint throws a `SpeedTestError` (`.offline`, `.rateLimited` or `.directoryUnavailable`), or
+/// `CancellationError` when the run was stopped. None is ever retried automatically.
 @DependencyClient
 public struct ServerDirectory: Sendable {
     /// `GET /api/v2/servers?secured=only`, with the coordinate when there is one. Without it the directory
@@ -19,6 +19,8 @@ public struct ServerDirectory: Sendable {
     public var fetch: @Sendable (_ near: Coordinate?) async throws -> [Server]
     /// `POST /api/v1/tokens`: a fresh token for this run's transfers.
     public var token: @Sendable () async throws -> TransferToken
+    /// `GET /api/v1/ip`: the device's public address and its provider, shown next to the result.
+    public var clientIP: @Sendable () async throws -> ClientIP
 }
 
 public extension DependencyValues {

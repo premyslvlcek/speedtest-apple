@@ -24,7 +24,7 @@ public extension Locator {
 }
 
 public extension ServerDirectory {
-    /// Lists the fixture servers and hands out a token.
+    /// Lists the fixture servers, hands out a token and reports a documentation address.
     static var scripted: ServerDirectory {
         @Dependency(\.continuousClock) var clock
         return ServerDirectory(
@@ -34,6 +34,9 @@ public extension ServerDirectory {
             },
             token: {
                 TransferToken(value: "scripted", ttl: .seconds(80))
+            },
+            clientIP: {
+                Fixtures.clientIP
             }
         )
     }

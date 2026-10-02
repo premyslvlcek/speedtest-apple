@@ -14,6 +14,9 @@ import ICMP
 public enum Fixtures {
     public static let prague = Coordinate(latitude: 50.0755, longitude: 14.4378)
 
+    /// An address from the documentation range (RFC 5737), never a real device's.
+    public static let clientIP = ClientIP(address: "203.0.113.7", provider: "Example Networks")
+
     /// In the directory's order, which is not by distance.
     public static let servers: [Server] = [
         skylanVeseli,

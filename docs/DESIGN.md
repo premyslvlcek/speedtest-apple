@@ -25,18 +25,19 @@ The technical design behind Speed Test: how the app is structured, the rules the
 ```
 App target (iOS universal + macOS)
   └─▶ SpeedTestFeature ──▶ SpeedTestKit ──▶ ICMP
-          └─▶ DesignSystem
+          ├─▶ HistoryFeature ──▶ SQLiteData
+          └─▶ DesignSystem   (also used by HistoryFeature)
 ```
 
 | Module | Depends on | Purpose |
 |---|---|---|
 | `ICMP` | Darwin, Foundation | Sending and parsing ICMP echo requests, usable by any app. |
 | `SpeedTestKit` | ICMP, CoreLocation, Network, swift-dependencies | The dependency clients of a run (live and scripted), the transfer meter, and the pure rules: server selection, throughput sampling, error mapping. No UI, no TCA. |
-| `SpeedTestFeature` | SpeedTestKit, DesignSystem, TCA | The reducer that drives a run, and the screen. |
+| `SpeedTestFeature` | SpeedTestKit, HistoryFeature, DesignSystem, TCA, SQLiteData | The reducer that drives a run, and the screen. |
 | `DesignSystem` | SwiftUI, Charts | Formatting, colors, the button and card styles, the animated number, the speed chart. It takes plain values. |
-| `HistoryFeature` | DesignSystem, TCA, SQLiteData | Reserved for the history of past results; not built yet. |
+| `HistoryFeature` | DesignSystem, TCA, SQLiteData | The history table and its migration, the reducer and the sheet. |
 
-The app target is thin: the scene and the localized Info.plist texts. One multiplatform SwiftUI target covers iPhone,
+The app target is thin: the scene (which also opens the database) and the localized Info.plist texts. One multiplatform SwiftUI target covers iPhone,
 iPad and native macOS (not Mac Catalyst). The Mac uses a single `Window`, and the iPad has multiple scenes off, so one
 window going to the background can't stop a test running in another.
 
@@ -47,7 +48,9 @@ Each numbered step is one effect and one action back into the reducer.
 1. **Locate.** Permission is requested on the first Start, not at launch. The locator waits for the user's answer
    with no timeout; a 10 s timeout starts only once authorization is resolved, so reading the system dialog never
    drops the test into approximate mode. The outcome is `.located`, `.notAuthorized` or `.unavailable`; anything but
-   `.located` means approximate mode, not a failure.
+   `.located` means approximate mode, not a failure. At the same time, `GET /api/v1/ip` looks up the public address
+   and provider for the line under the card; it has its own effect, so a failed lookup only hides the line, and
+   Stop doesn't cancel it.
 2. **Fetch servers.** `GET /api/v2/servers?secured=only&latitude=…&longitude=…`, or only `secured=only` in approximate
    mode. Entries with a duplicate URL or a non-`https` URL are dropped while decoding.
 3. **Pick the candidates.** With a location: the 5 closest by great-circle distance, computed on the device (the
@@ -65,6 +68,8 @@ Each numbered step is one effect and one action back into the reducer.
 7. **Download, 15 s** (section 4). Every sample is an action; the stream's end is another.
 8. **Upload, 10 s**, only when "Measure upload too" is on (off by default, remembered in `@Shared(.appStorage)`). Same
    server, same token. If the upload can't start, the run still finishes, with upload marked unavailable.
+9. **Save.** A finished run is inserted into the history table: the server, the median ping, both averages and the
+   address. A stopped, interrupted or failed run isn't.
 
 **Stop** cancels every effect of the run at once (one cancel ID); ending the meter's stream cancels the transfer, its
 connections and the network watch. The partial result is the last sample of whichever transfer was running. Start
@@ -139,6 +144,11 @@ decimal. Ping in whole milliseconds, "<1 ms" below one. Numbers are formatted in
   measured. The rows show results; the live value is in the big number and the graph.
 - The "Measure upload too" switch sits below the card and is disabled during a run.
 - Start/Stop is pinned outside the scrolling content, so it's always in the same place.
+- Under the card, one quiet line: "Your IP 203.0.113.7 · provider".
+- A History button in the toolbar opens a sheet with the finished runs, newest first: server, date, download (and
+  upload), ping and the address. Swipe to delete a row; Clear asks first, then deletes them all. Done sits on the
+  trailing side and Clear on the leading side, as the HIG places them. The main screen itself stays the brief's
+  single screen.
 - Below: the pinged servers, filling in live with their distance and ping; the chosen one is marked.
 - **States:** idle; locating and pinging; finished; interrupted, with the partial average and the reason; degraded,
   with inline notes (location off, location unavailable, ICMP blocked); failed, with an inline message and Try again.
@@ -179,7 +189,10 @@ decimal. Ping in whole milliseconds, "<1 ms" below one. Numbers are formatted in
 - **SpeedTestFeature:** exhaustive `TestStore` tests for the run from Start to the chosen server, the transfers,
   failover, Stop at each phase, background, retry and the upload switch, with fakes for every dependency. A
   dependency a test didn't provide fails the test if the reducer calls it. The screen's text and the graph's data
-  are tested as plain functions of the state.
+  are tested as plain functions of the state. Which runs are saved, and what an entry holds, is read back from a
+  temporary database.
+- **HistoryFeature:** the list's order, deleting a row, and Clear with its confirmation, against a temporary
+  migrated database.
 - **Time:** tests never sleep or read the wall clock. They use `TestClock` on the main serial executor, so a slow CI
   machine can't make a test pass or fail.
 - **CI:** Xcode 26.6 and Xcode 27.0; the package tests on macOS and the iOS simulator, the iOS and macOS app builds,

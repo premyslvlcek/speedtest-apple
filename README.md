@@ -10,9 +10,9 @@ Upload is an optional extra.
   <img src="docs/media/iphone-run.gif" width="300" alt="A full test on an iPhone: the server list pings in, then the download runs with a live graph">
 </p>
 
-| Finished, light | Finished, dark |
-|---|---|
-| <img src="docs/media/iphone-finished-light.png" width="260" alt="A finished test on iPhone in light mode"> | <img src="docs/media/iphone-finished-dark.png" width="260" alt="A finished test on iPhone in dark mode"> |
+| Finished, light | Finished, dark | History |
+|---|---|---|
+| <img src="docs/media/iphone-finished-light.png" width="240" alt="A finished test on iPhone in light mode"> | <img src="docs/media/iphone-finished-dark.png" width="240" alt="A finished test on iPhone in dark mode"> | <img src="docs/media/iphone-history.png" width="240" alt="The history sheet with two finished runs"> |
 
 ## What it does
 
@@ -24,7 +24,8 @@ Upload is an optional extra.
 
 The screen shows the three values the task asks for (server, ping, download speed) as the first three rows of one
 card, with Start/Stop pinned below. Around them: the elapsed time, a big live number, the graph, and the list of
-pinged servers as their replies come in.
+pinged servers as their replies come in. Under the card a quiet line shows your public IP and provider, and a
+History button opens the finished runs in a sheet.
 
 The app is in English and Czech.
 
@@ -37,10 +38,11 @@ every request with `curl`:
 |---|---|
 | `GET https://sp-dir.uwn.com/api/v2/servers?secured=only&latitude=…&longitude=…` | The server list with coordinates. `secured=only` makes every server URL `https://`. |
 | `POST https://sp-dir.uwn.com/api/v1/tokens` | A test token, `{"token": "…", "ttl": 80}`. It goes in the `x-test-token` header. |
+| `GET https://sp-dir.uwn.com/api/v1/ip` | Your public IP address and provider, shown under the result card. |
 | `GET <server>/download?size=<bytes>` and `POST <server>/upload` | The transfers themselves. |
 
 The web client measures latency with HTTP requests and a WebSocket. The app replaces both with real ICMP echo, as
-the task asks, and doesn't use the other calls the web client makes (IP lookup, capability check, posting results).
+the task asks, and doesn't use the other calls the web client makes (capability check, posting results).
 
 ## Running it
 
@@ -143,7 +145,7 @@ mobile data and produce a mixed result.
 certificates, on the same unusual ports. The app has no App Transport Security exception.
 
 **What the app doesn't do.** It doesn't send results anywhere (the web client posts them to Ubiquiti), and it makes
-exactly one directory request and one token request per run, with no automatic retries. A 429 from the directory
+one server-list request, one token request and one IP lookup per run, with no automatic retries. A 429 from the directory
 shows "busy, try again in a minute".
 
 **Honest counters.** Requests send `Accept-Encoding: identity`, so a compressing server can't inflate the number, and
@@ -153,15 +155,21 @@ the session has no cache. The upload counter measures bytes handed to the networ
 switch below the card, off by default and remembered; with it on, a 10 s upload follows the download on the same
 server and the whole run takes about 30 s.
 
+**Beyond the brief, kept out of the way.** The main screen is the brief's screen. Everything else is an extra a
+reader can ignore: upload is a switch, history is a sheet behind a toolbar button, the IP is one quiet line, and the
+app runs on the Mac and in Czech too.
+
 **Errors inline, not in alerts.** Failures appear in plain words where the result would be, with Try again.
 Interruptions (Stop, the app going to the background on iOS, a network change, a lost connection) keep the partial
 average and say what happened.
 
 **Architecture.**
 - A local Swift package with five modules. `ICMP` and `SpeedTestKit` have no UI and no TCA, so they work in any app;
-  only `SpeedTestFeature` (and the history feature to come) know about TCA.
+  only `SpeedTestFeature` and `HistoryFeature` know about TCA.
 - The reducer owns the flow and every decision; each dependency wraps one piece of I/O (locator, directory, pinger,
   transfer meter). Every reducer test runs against fakes and a test clock, with no network.
+- History is a SQLite table through SQLiteData. The speed-test feature inserts a finished run; the history sheet
+  observes the table with `@FetchAll`; neither knows the other's state. Stopped or interrupted runs aren't kept.
 - Plain `throws` rather than typed throws: `URLSession`, clocks and cancellation throw untyped errors anyway. Every
   error is mapped to `SpeedTestError` in one place.
 - Strings live in String Catalogs with stable keys and Xcode's generated symbols; numbers use `FormatStyle` in the
@@ -172,7 +180,8 @@ average and say what happened.
 | Kind | What it covers |
 |---|---|
 | Unit tests | ICMP packets against captured bytes, the ping matching logic, the pinger against a fake socket and the real loopback (IPv4 and IPv6, two pingers at once), server selection, decoding the real directory JSON, the error mapping, the throughput sampler, and the transfer meter's sampling, stall race and interruptions against a test clock. |
-| Reducer tests | The whole run step by step with TCA's exhaustive `TestStore`: Start to the chosen server, download and upload, failover, Stop at each phase, background, retry, and the upload switch. Plus the screen's text and the graph's data. |
+| Reducer tests | The whole run step by step with TCA's exhaustive `TestStore`: Start to the chosen server, download and upload, failover, Stop at each phase, background, retry, the upload switch, the IP lookup, and which runs are saved. Plus the screen's text and the graph's data. |
+| History tests | The list's order, deleting a row, Clear with its confirmation, against a temporary SQLite database. |
 
 CI (GitHub Actions) runs lint and then, on **Xcode 26.6** (iOS 26.5, macOS) and on **Xcode 27.0** (iOS 27.0,
 macOS 27), the package tests on macOS and on the iOS simulator and both app builds. It fails on any compiler warning
@@ -184,8 +193,9 @@ Checked by hand on real hardware (an iPhone 14 Pro and an Intel Mac):
 - the location permission dialogs on both platforms
 - the real throughput path, against `curl` and the web client
 
-The recording and screenshots above are a real run in the iOS Simulator on my home line: 248 Mbps down, with a 6 ms
-ping to a server 1.4 km away.
+The recording and screenshots above are real runs in the iOS Simulator on my home line: 305 Mbps down, with a 7 ms
+ping to a server 1.4 km away. Only the IP line is not real: those builds answered the IP lookup with a documentation
+address (203.0.113.7) instead of my own.
 
 ## Known limitations
 
@@ -197,7 +207,6 @@ ping to a server 1.4 km away.
 ## Future work
 
 - A two-pane layout on iPad and Mac, with a Test menu and ⌘R on the Mac.
-- A history of past results in SQLite through SQLiteData.
 - Snapshot tests of the screen states, and UI smoke tests against a scripted run.
 - Choosing a server by hand: tapping a row in the server list would run the test against it.
 

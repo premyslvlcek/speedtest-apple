@@ -6,14 +6,27 @@
 //
 
 import ComposableArchitecture
+import HistoryFeature
+import SQLiteData
 import SwiftUI
 
 /// The app's only scene. It owns the root store, so the app target needs nothing but this module.
 /// One window on the Mac and no multiple scenes on iPad: a second window would share the store.
 public struct SpeedTestScene: Scene {
-    @MainActor private static let store = Store(initialState: SpeedTest.State()) {
-        SpeedTest()
-    }
+    /// Created once, on first use. The history database is set up first, so nothing reads the default
+    /// dependency before it's migrated.
+    @MainActor private static let store: StoreOf<SpeedTest> = {
+        prepareDependencies {
+            do {
+                $0.defaultDatabase = try historyDatabase()
+            } catch {
+                reportIssue(error)
+            }
+        }
+        return Store(initialState: SpeedTest.State()) {
+            SpeedTest()
+        }
+    }()
 
     public init() {}
 
