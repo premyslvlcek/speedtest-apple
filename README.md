@@ -14,6 +14,10 @@ Upload is an optional extra.
 |---|---|---|
 | <img src="docs/media/iphone-finished-light.png" width="240" alt="A finished test on iPhone in light mode"> | <img src="docs/media/iphone-finished-dark.png" width="240" alt="A finished test on iPhone in dark mode"> | <img src="docs/media/iphone-history.png" width="240" alt="The history sheet with two finished runs"> |
 
+| Mac | iPad |
+|---|---|
+| <img src="docs/media/mac.png" width="480" alt="The Mac app after a run with upload: two panes, the measurement on the left and the closest servers on the right"> | <img src="docs/media/ipad.png" width="300" alt="The iPad after a run: two panes, the measurement on the left and the closest servers on the right"> |
+
 ## What it does
 
 1. On the first Start it asks for your location, then fetches the list of speed-test servers.
@@ -200,9 +204,10 @@ Checked by hand on real hardware (an iPhone 14 Pro and an Intel Mac):
 - the location permission dialogs on both platforms
 - the real throughput path, against `curl` and the web client
 
-The recording and screenshots above are real runs in the iOS Simulator on my home line: 305 Mbps down, with a 7 ms
-ping to a server 1.4 km away. Only the IP line is not real: those builds answered the IP lookup with a documentation
-address (203.0.113.7) instead of my own.
+The recording and screenshots above are real runs on my home line: on the iPhone simulator 305 Mbps down with a 7 ms
+ping to a server 1.4 km away, on the Mac 288 Mbps down and 271 Mbps up. Two things are not real: those builds answered
+the IP lookup with a documentation address (203.0.113.7) instead of my own, and measured distances from central Prague
+instead of my location.
 
 ## Known limitations
 
