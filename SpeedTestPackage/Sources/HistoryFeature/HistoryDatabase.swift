@@ -8,9 +8,10 @@
 import SQLiteData
 
 /// The app's database, migrated. On a device it's a file in Application Support; in tests and previews
-/// SQLiteData gives each one its own temporary database.
-public func historyDatabase() throws -> any DatabaseWriter {
-    let database = try defaultDatabase()
+/// SQLiteData gives each one its own temporary database. `inMemory` keeps it in memory instead, for a launch that
+/// must not touch the saved history (the UI tests).
+public func historyDatabase(inMemory: Bool = false) throws -> any DatabaseWriter {
+    let database: any DatabaseWriter = inMemory ? try inMemoryDatabase() : try defaultDatabase()
     var migrator = DatabaseMigrator()
     #if DEBUG
         migrator.eraseDatabaseOnSchemaChange = true
@@ -35,4 +36,13 @@ public func historyDatabase() throws -> any DatabaseWriter {
     }
     try migrator.migrate(database)
     return database
+}
+
+/// An in-memory database set up like SQLiteData's `defaultDatabase()`, which adds its canonical collation.
+private func inMemoryDatabase() throws -> any DatabaseWriter {
+    var configuration = Configuration()
+    configuration.prepareDatabase { db in
+        db.add(collation: .canonical)
+    }
+    return try DatabaseQueue(configuration: configuration)
 }

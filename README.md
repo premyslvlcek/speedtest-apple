@@ -182,10 +182,12 @@ average and say what happened.
 | Unit tests | ICMP packets against captured bytes, the ping matching logic, the pinger against a fake socket and the real loopback (IPv4 and IPv6, two pingers at once), server selection, decoding the real directory JSON, the error mapping, the throughput sampler, and the transfer meter's sampling, stall race and interruptions against a test clock. |
 | Reducer tests | The whole run step by step with TCA's exhaustive `TestStore`: Start to the chosen server, download and upload, failover, Stop at each phase, background, retry, the upload switch, the IP lookup, and which runs are saved. Plus the screen's text and the graph's data. |
 | History tests | The list's order, deleting a row, Clear with its confirmation, against a temporary SQLite database. |
+| UI test | One smoke test of the real app against a scripted run (no network, location or ICMP): a run fills the three fields and the address, and lands in the history. Only the wiring; what a run does is pinned in the tests above. |
 
 CI (GitHub Actions) runs lint and then, on **Xcode 26.6** (iOS 26.5, macOS) and on **Xcode 27.0** (iOS 27.0,
-macOS 27), the package tests on macOS and on the iOS simulator and both app builds. It fails on any compiler warning
-in this repository's sources.
+macOS 27), the package tests on macOS and on the iOS simulator, both app builds and the UI test. The UI test's
+screenshot of the finished run is kept with each run, so the Xcode 27 job shows how iOS 27 draws the screen. CI fails
+on any compiler warning in this repository's sources.
 
 Checked by hand on real hardware (an iPhone 14 Pro and an Intel Mac):
 - ICMP on the iPhone over Wi-Fi and over mobile data
@@ -207,7 +209,7 @@ address (203.0.113.7) instead of my own.
 ## Future work
 
 - A two-pane layout on iPad and Mac, with a Test menu and ⌘R on the Mac.
-- Snapshot tests of the screen states, and UI smoke tests against a scripted run.
+- Snapshot tests of every screen state.
 - Choosing a server by hand: tapping a row in the server list would run the test against it.
 
 ## How I built this

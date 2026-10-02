@@ -56,7 +56,7 @@ public extension PingService {
 
 public extension TransferMeter {
     /// A ramp at the real sample times (every 250 ms to 15 s or 10 s), played faster: download samples 50 ms apart
-    /// (3 s on screen, long enough for a UI test to tap Stop mid-download), upload samples 25 ms apart.
+    /// (3 s on screen), upload samples 25 ms apart.
     static var scripted: TransferMeter {
         @Dependency(\.continuousClock) var clock
         return TransferMeter(measure: { _, direction, _ in

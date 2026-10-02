@@ -18,7 +18,8 @@ lowest latency. SwiftUI and The Composable Architecture (TCA) on top of a small 
   - `DesignSystem`: formatting, colors, button and card styles, the speed chart. Takes plain values.
   - `HistoryFeature`: past results in SQLite through SQLiteData, with a reducer and a sheet.
   - `SpeedTestFeature`: the reducer that drives a run step by step, and the screen.
-- `SpeedTestUITests/` (not built yet): two XCUITest smoke tests against a scripted run.
+- `SpeedTestUITests/`: one XCUITest smoke test of the app's wiring against the scripted run (`-scriptedRun`, Debug
+  builds only).
 - `docs/DESIGN.md`: the technical design.
 
 ## Build and test
@@ -45,6 +46,10 @@ xcodebuild build -project SpeedTest.xcodeproj -scheme SpeedTest \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.5' -skipMacroValidation
 xcodebuild build -project SpeedTest.xcodeproj -scheme SpeedTest -destination 'platform=macOS' \
   -skipMacroValidation CODE_SIGNING_ALLOWED=NO
+
+# The UI test (iOS simulator, scripted run)
+xcodebuild test -project SpeedTest.xcodeproj -scheme SpeedTest \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.5' -only-testing:SpeedTestUITests -skipMacroValidation
 
 # Format and lint (both must be clean before a commit)
 ./swiftformat.sh && ./swiftlint.sh
@@ -111,7 +116,7 @@ The tools are pinned in the `Mintfile`; `mint bootstrap` installs them.
 - Sub-views as `private var x: some View` or small structs; `#Preview` for previews.
 - Strings: see **Localization** below. Numbers built in code use `Text(verbatim:)`.
 - Accessibility identifiers: `startStopButton`, `serverField`, `pingField`, `downloadField`, `uploadField`,
-  `phaseLabel`, `bigNumber`, `uploadToggle`, `ipField`, `historyButton`.
+  `phaseLabel`, `bigNumber`, `uploadToggle`, `ipField`, `historyButton`, `historyRow`.
 
 **Localization** (English, the default, and Czech)
 - Every user-facing string lives in its module's String Catalog, `Resources/Localizable.xcstrings` (format 1.1,

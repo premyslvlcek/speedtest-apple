@@ -112,6 +112,7 @@ struct HistoryRow: View {
             }
         }
         .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("historyRow")
     }
 
     private func speed(_ mbps: Double, systemImage: String) -> some View {

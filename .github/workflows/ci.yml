@@ -120,3 +120,36 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             -quiet 2>&1 | tee build-macos.log
           .github/scripts/check-warnings.sh build-macos.log
+
+      # A smoke test of the real app against the scripted run (no network, location or ICMP).
+      - name: UI tests
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project SpeedTest.xcodeproj \
+            -scheme SpeedTest \
+            -destination "$IOS_DESTINATION" \
+            -only-testing:SpeedTestUITests \
+            -skipMacroValidation \
+            -resultBundlePath build/UITests.xcresult \
+            -quiet 2>&1 | tee ui-tests.log
+          .github/scripts/check-warnings.sh ui-tests.log
+
+      # The "Finished run" screenshot from each toolchain: on Xcode 27, how iOS 27 draws the screen.
+      - name: Export UI test screenshots
+        if: always()
+        continue-on-error: true
+        run: |
+          xcrun xcresulttool export attachments \
+            --path build/UITests.xcresult \
+            --output-path build/ui-test-attachments
+
+      - name: Upload UI test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: UI tests, ${{ matrix.name }}
+          path: |
+            build/UITests.xcresult
+            build/ui-test-attachments
+          if-no-files-found: warn

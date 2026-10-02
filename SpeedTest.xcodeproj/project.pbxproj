@@ -10,7 +10,18 @@
 		AAF43B26306DD445005CF94A /* SpeedTestFeature in Frameworks */ = {isa = PBXBuildFile; productRef = AAF43B25306DD445005CF94A /* SpeedTestFeature */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		AAB10001306E000000C0A25E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AACB8409306DD29900C0A25E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AACB8410306DD29900C0A25E;
+			remoteInfo = SpeedTest;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		AAB10002306E000000C0A25E /* SpeedTestUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SpeedTestUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AACB8411306DD29900C0A25E /* SpeedTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SpeedTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -25,6 +36,11 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		AAB10003306E000000C0A25E /* SpeedTestUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = SpeedTestUITests;
+			sourceTree = "<group>";
+		};
 		AACB8413306DD29900C0A25E /* SpeedTest */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -36,6 +52,13 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		AAB10004306E000000C0A25E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AACB840E306DD29900C0A25E /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -51,6 +74,7 @@
 			isa = PBXGroup;
 			children = (
 				AACB8413306DD29900C0A25E /* SpeedTest */,
+				AAB10003306E000000C0A25E /* SpeedTestUITests */,
 				AACB8412306DD29900C0A25E /* Products */,
 			);
 			sourceTree = "<group>";
@@ -59,6 +83,7 @@
 			isa = PBXGroup;
 			children = (
 				AACB8411306DD29900C0A25E /* SpeedTest.app */,
+				AAB10002306E000000C0A25E /* SpeedTestUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -66,6 +91,29 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		AAB10007306E000000C0A25E /* SpeedTestUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AAB1000B306E000000C0A25E /* Build configuration list for PBXNativeTarget "SpeedTestUITests" */;
+			buildPhases = (
+				AAB10006306E000000C0A25E /* Sources */,
+				AAB10004306E000000C0A25E /* Frameworks */,
+				AAB10005306E000000C0A25E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AAB10008306E000000C0A25E /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				AAB10003306E000000C0A25E /* SpeedTestUITests */,
+			);
+			name = SpeedTestUITests;
+			packageProductDependencies = (
+			);
+			productName = SpeedTestUITests;
+			productReference = AAB10002306E000000C0A25E /* SpeedTestUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		AACB8410306DD29900C0A25E /* SpeedTest */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = AACB841C306DD29C00C0A25E /* Build configuration list for PBXNativeTarget "SpeedTest" */;
@@ -99,6 +147,10 @@
 				LastSwiftUpdateCheck = 2660;
 				LastUpgradeCheck = 2660;
 				TargetAttributes = {
+					AAB10007306E000000C0A25E = {
+						CreatedOnToolsVersion = 26.6;
+						TestTargetID = AACB8410306DD29900C0A25E;
+					};
 					AACB8410306DD29900C0A25E = {
 						CreatedOnToolsVersion = 26.6;
 					};
@@ -123,11 +175,19 @@
 			projectRoot = "";
 			targets = (
 				AACB8410306DD29900C0A25E /* SpeedTest */,
+				AAB10007306E000000C0A25E /* SpeedTestUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		AAB10005306E000000C0A25E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AACB840F306DD29900C0A25E /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -138,6 +198,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		AAB10006306E000000C0A25E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AACB840D306DD29900C0A25E /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -147,7 +214,61 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		AAB10008306E000000C0A25E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AACB8410306DD29900C0A25E /* SpeedTest */;
+			targetProxy = AAB10001306E000000C0A25E /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		AAB10009306E000000C0A25E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = BX3E4TF5BN;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.premyslvlcek.SpeedTestUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = SpeedTest;
+			};
+			name = Debug;
+		};
+		AAB1000A306E000000C0A25E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = BX3E4TF5BN;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.premyslvlcek.SpeedTestUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = SpeedTest;
+			};
+			name = Release;
+		};
 		AACB841A306DD29C00C0A25E /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -367,6 +488,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		AAB1000B306E000000C0A25E /* Build configuration list for PBXNativeTarget "SpeedTestUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AAB10009306E000000C0A25E /* Debug */,
+				AAB1000A306E000000C0A25E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		AACB840C306DD29900C0A25E /* Build configuration list for PBXProject "SpeedTest" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
