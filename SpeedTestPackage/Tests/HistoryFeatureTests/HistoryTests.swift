@@ -24,8 +24,8 @@ import TestSupport
     @Test func deletingARowRemovesThatEntry() async throws {
         let store = try await Self.store(seeded: [Self.monday, Self.tuesday, Self.wednesday])
 
-        // Row 1 of the newest-first list is Tuesday's.
-        await store.send(\.view.deleteTapped, IndexSet(integer: 1))
+        // Row 1 of the newest-first list is Tuesday's. The delete is an effect: wait for it before reading.
+        await store.send(\.view.deleteTapped, IndexSet(integer: 1)).finish()
         try await store.state.$entries.load()
 
         #expect(store.state.entries.map(\.date) == [Self.wednesday, Self.monday])
@@ -40,6 +40,7 @@ import TestSupport
         await store.send(\.confirmation.presented.clearAll) {
             $0.confirmation = nil
         }
+        .finish()
         try await store.state.$entries.load()
 
         #expect(store.state.entries.isEmpty)

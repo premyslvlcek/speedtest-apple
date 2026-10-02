@@ -322,9 +322,11 @@ import TestSupport
         }
     }
 
-    /// Every saved entry. The save is an effect the store has already finished by the time a test asks.
+    /// Every saved entry, once the save effect has finished: it writes on the database's own queue, so the run's
+    /// last action can be received before the row is there.
     private static func history(_ store: TestStoreOf<SpeedTest>) async throws -> [HistoryEntry] {
-        try await store.dependencies.defaultDatabase.read { db in
+        await store.finish()
+        return try await store.dependencies.defaultDatabase.read { db in
             try HistoryEntry.all.fetchAll(db)
         }
     }
