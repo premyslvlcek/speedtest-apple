@@ -99,13 +99,13 @@ struct DirectoryHTTPClient: Sendable {
     /// HTTP's 2xx range: the request succeeded.
     private static let successStatusCodes = 200 ..< 300
 
-    /// A coordinate with a fixed number of decimals, never in scientific notation. Four decimals is about 11 m:
-    /// plenty for choosing servers, and no more of the device's position than the directory needs.
+    /// A coordinate with a fixed number of decimals, never in scientific notation. Two decimals is about 1 km, the
+    /// accuracy the locator asks for: enough for choosing servers, and no more of the device's position than that.
     private static func queryValue(_ degrees: Double) -> String {
         String(format: coordinateFormat, degrees)
     }
 
-    private static let coordinateFormat = "%.4f"
+    private static let coordinateFormat = "%.2f"
 
     /// A body we can't read means the directory is unavailable, whatever the status said.
     private func decoded<T>(_ decode: () throws -> T) throws -> T {

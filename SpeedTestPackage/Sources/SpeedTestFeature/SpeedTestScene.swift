@@ -8,7 +8,6 @@
 import ComposableArchitecture
 import HistoryFeature
 import SpeedTestKit
-import SQLiteData
 import SwiftUI
 
 /// The app's only scene. It owns the root store, so the app target needs nothing but this module.
@@ -24,7 +23,7 @@ public struct SpeedTestScene: Scene {
     @MainActor private static func makeStore() -> StoreOf<SpeedTest> {
         prepareDependencies {
             do {
-                $0.defaultDatabase = try historyDatabase(inMemory: LaunchOptions.isScriptedRun)
+                try $0.prepareHistory(inMemory: LaunchOptions.isScriptedRun)
             } catch {
                 reportIssue(error)
             }

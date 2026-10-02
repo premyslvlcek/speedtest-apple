@@ -25,8 +25,9 @@ public struct HistoryEntry: Hashable, Identifiable, Sendable {
     public var ipProvider: String?
 }
 
-/// The macro doesn't carry `Sendable` over to the draft; it's needed to write one from an effect.
-extension HistoryEntry.Draft: Sendable {}
+/// The macro doesn't carry `Sendable` or `Equatable` over to the draft: one is needed to write it from an effect,
+/// the other to compare what a run saved.
+extension HistoryEntry.Draft: Sendable, Equatable {}
 
 public extension HistoryEntry.Draft {
     /// A new entry for a run that just finished. Public because the macro's memberwise initializer is internal,

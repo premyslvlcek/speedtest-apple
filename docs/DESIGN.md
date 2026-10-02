@@ -9,8 +9,9 @@ The technical design behind Speed Test: how the app is structured, the rules the
   reducer decides what happens next. Every decision is in one place and every step is visible in an exhaustive
   `TestStore` test.
 - **A dependency wraps one piece of I/O, or one piece of concurrency that can't live in `State`.** The locator, the
-  server directory and the ping service are plain I/O. The transfer meter is the one exception: it holds the live
-  connections, races the first byte against the stall timeout and owns the 250 ms tick, none of which is a value.
+  server directory, the ping service and the history client are plain I/O. The transfer meter is the one exception:
+  it holds the live connections, races the first byte against the stall timeout and owns the 250 ms tick, none of
+  which is a value.
 - **Take dependencies for broad, well-maintained infrastructure; write small, domain-critical code yourself when the
   options are unmaintained.** Hence our own ICMP, and TCA and swift-dependencies for the rest.
 - **Typed throws pay off in closed, synchronous code where the caller handles every case.** At an async boundary built
@@ -33,9 +34,9 @@ App target (iOS universal + macOS)
 |---|---|---|
 | `ICMP` | Darwin, Foundation | Sending and parsing ICMP echo requests, usable by any app. |
 | `SpeedTestKit` | ICMP, CoreLocation, Network, swift-dependencies | The dependency clients of a run (live and scripted), the transfer meter, and the pure rules: server selection, throughput sampling, error mapping. No UI, no TCA. |
-| `SpeedTestFeature` | SpeedTestKit, HistoryFeature, DesignSystem, TCA, SQLiteData | The reducer that drives a run, and the screen. |
+| `SpeedTestFeature` | SpeedTestKit, HistoryFeature, DesignSystem, TCA | The reducer that drives a run, and the screen. It saves a finished run through `HistoryClient` and never sees the database. |
 | `DesignSystem` | SwiftUI, Charts | Formatting, colors, the button and card styles, the animated number, the speed chart. It takes plain values. |
-| `HistoryFeature` | DesignSystem, TCA, SQLiteData | The history table and its migration, the reducer and the sheet. |
+| `HistoryFeature` | DesignSystem, TCA, SQLiteData | The history table and its migration, `HistoryClient` (save a run), the reducer and the sheet. |
 
 The app target is thin: the scene and the localized Info.plist texts. The scene creates the root store once, and
 prepares the dependencies right before it: the database, and the scripted clients for the UI test. One multiplatform
@@ -53,7 +54,9 @@ Each numbered step is one effect and one action back into the reducer.
    and provider for the line under the card; it has its own effect, so a failed lookup only hides the line, and
    Stop doesn't cancel it.
 2. **Fetch servers.** `GET /api/v2/servers?secured=only&latitude=…&longitude=…`, or only `secured=only` in approximate
-   mode. Entries with a duplicate URL or a non-`https` URL are dropped while decoding.
+   mode. The coordinates are rounded to two decimals (about 1 km), the accuracy the locator asks for. Entries with a
+   duplicate URL, a non-`https` URL or a host outside `wifiman.me` are dropped while decoding: the app sends a token
+   and 25 s of traffic to the server it picks, so it only goes to Ubiquiti's.
 3. **Pick the candidates.** With a location: the 5 closest by great-circle distance, computed on the device (the
    directory's order isn't trusted). In approximate mode: up to 10 servers in the directory's order, with no
    distances. No servers at all is `.noServers`.
@@ -69,8 +72,8 @@ Each numbered step is one effect and one action back into the reducer.
 7. **Download, 15 s** (section 4). Every sample is an action; the stream's end is another.
 8. **Upload, 10 s**, only when "Measure upload too" is on (off by default, remembered in `@Shared(.appStorage)`). Same
    server, same token. If the upload can't start, the run still finishes, with upload marked unavailable.
-9. **Save.** A finished run is inserted into the history table: the server, the median ping, both averages and the
-   address. A stopped, interrupted or failed run isn't.
+9. **Save.** A finished run goes to `HistoryClient.save`, which inserts it into the history table: the server, the
+   median ping, both averages and the address. A stopped, interrupted or failed run isn't saved.
 
 **Stop** cancels every effect of the run at once (one cancel ID); ending the meter's stream cancels the transfer, its
 connections and the network watch. The partial result is the last sample of whichever transfer was running. Start
@@ -194,10 +197,10 @@ decimal. Ping in whole milliseconds, "<1 ms" below one. Numbers are formatted in
 - **SpeedTestFeature:** exhaustive `TestStore` tests for the run from Start to the chosen server, the transfers,
   failover, Stop at each phase, background, retry and the upload switch, with fakes for every dependency. A
   dependency a test didn't provide fails the test if the reducer calls it. The screen's text and the graph's data
-  are tested as plain functions of the state. Which runs are saved, and what an entry holds, is read back from a
-  temporary database.
-- **HistoryFeature:** the list's order, deleting a row, and Clear with its confirmation, against a temporary
-  migrated database.
+  are tested as plain functions of the state. Which runs are saved, and what an entry holds, is recorded by a fake
+  `HistoryClient`.
+- **HistoryFeature:** the list's order, deleting a row, Clear with its confirmation, and the live client saving a
+  run, against a temporary migrated database.
 - **UI test:** one smoke test of the real app, launched with `-scriptedRun` (Debug builds only): the four dependency
   clients are swapped for their scripted versions and the history is kept in memory, so a run takes a few seconds
   with no network, location or ICMP, and never touches the saved history. It checks only the wiring no package test

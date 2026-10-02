@@ -9,7 +9,6 @@ import ComposableArchitecture
 import Foundation
 import ICMP
 import SpeedTestKit
-import SQLiteData
 import Testing
 import TestSupport
 
@@ -33,7 +32,8 @@ import TestSupport
         state.selection?.ping = PingResult(rtts: [.milliseconds(6), .milliseconds(7), .milliseconds(5)], sent: 5)
         state.clientIP = Fixtures.clientIP
         let server = try #require(state.selection?.server)
-        let store = try Self.store(state, meter)
+        let history = RunFakes.History()
+        let store = try Self.store(state, meter, history: history)
 
         await store.send(.tokenResponse(.success(token))) {
             $0.token = token
@@ -62,10 +62,9 @@ import TestSupport
             Start(server: server.id, direction: .download, token: token.value),
             Start(server: server.id, direction: .upload, token: token.value)
         ])
-        #expect(try await Self.history(store) == [
-            HistoryEntry(
-                id: 1,
-                date: Self.now,
+        #expect(await history.saved(store) == [
+            HistoryEntry.Draft(
+                recordedAt: Self.now,
                 serverProvider: server.provider,
                 serverCity: server.city,
                 pingMilliseconds: 6,
@@ -80,7 +79,8 @@ import TestSupport
     /// The brief's test: download only. Upload is an opt-in extra.
     @Test func withUploadOffTheRunEndsAfterTheDownload() async throws {
         let meter = RunFakes.Meter([.samples([download1])])
-        let store = try Self.store(Self.serverChosen(measuresUpload: false), meter)
+        let history = RunFakes.History()
+        let store = try Self.store(Self.serverChosen(measuresUpload: false), meter, history: history)
 
         await store.send(.tokenResponse(.success(token))) {
             $0.token = token
@@ -95,7 +95,7 @@ import TestSupport
         }
 
         #expect(meter.starts.value.map(\.direction) == [.download])
-        #expect(try await Self.history(store).map(\.uploadMbps) == [nil])
+        #expect(await history.saved(store).map(\.uploadMbps) == [nil])
     }
 
     /// The chosen server sends nothing: the run moves to the failover target, another host, and carries on there.
@@ -205,7 +205,8 @@ import TestSupport
 
     @Test func anUploadThatCannotStartStillFinishes() async throws {
         let meter = RunFakes.Meter([.samples([download1]), .samples([], then: .transferFailed)])
-        let store = try Self.store(Self.serverChosen(), meter)
+        let history = RunFakes.History()
+        let store = try Self.store(Self.serverChosen(), meter, history: history)
         store.exhaustivity = .off(showSkippedAssertions: false)
 
         await store.send(.tokenResponse(.success(token)))
@@ -215,12 +216,13 @@ import TestSupport
         #expect(store.state.isUploadUnavailable)
         #expect(store.state.upload == nil)
         #expect(store.state.phase == .finished)
-        #expect(try await Self.history(store).map(\.uploadMbps) == [nil])
+        #expect(await history.saved(store).map(\.uploadMbps) == [nil])
     }
 
     @Test func stopDuringTheDownloadKeepsAPartialAverage() async throws {
         let meter = RunFakes.Meter([.samplesThenWait([download1])])
-        let store = try Self.store(Self.serverChosen(), meter)
+        let history = RunFakes.History()
+        let store = try Self.store(Self.serverChosen(), meter, history: history)
 
         await store.send(.tokenResponse(.success(token))) {
             $0.token = token
@@ -235,7 +237,7 @@ import TestSupport
         }
 
         // Only finished runs are kept.
-        #expect(try await Self.history(store).isEmpty)
+        #expect(await history.saved(store).isEmpty)
     }
 
     @Test func stopDuringTheUploadKeepsTheDownloadAndAPartialUpload() async throws {
@@ -305,29 +307,20 @@ import TestSupport
 
     static let now = Date(timeIntervalSince1970: 1_790_900_000)
 
-    /// A fresh, migrated database per store, and a fixed clock for the entries' dates.
+    /// A fixed clock for the entries' dates, and a history that records what the run saves.
     private static func store(
         _ state: SpeedTest.State,
         _ meter: RunFakes.Meter,
+        history: RunFakes.History = RunFakes.History(),
         dependencies: (inout DependencyValues) -> Void = { _ in }
     ) throws -> TestStoreOf<SpeedTest> {
-        let database = try historyDatabase()
-        return TestStore(initialState: state) {
+        TestStore(initialState: state) {
             SpeedTest()
         } withDependencies: {
             $0.transferMeter = meter.client
-            $0.defaultDatabase = database
+            $0.historyClient = history.client
             $0.date = .constant(now)
             dependencies(&$0)
-        }
-    }
-
-    /// Every saved entry, once the save effect has finished: it writes on the database's own queue, so the run's
-    /// last action can be received before the row is there.
-    private static func history(_ store: TestStoreOf<SpeedTest>) async throws -> [HistoryEntry] {
-        await store.finish()
-        return try await store.dependencies.defaultDatabase.read { db in
-            try HistoryEntry.all.fetchAll(db)
         }
     }
 }

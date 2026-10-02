@@ -46,6 +46,20 @@ import TestSupport
         #expect(store.state.entries.isEmpty)
     }
 
+    @Test func theLiveClientSavesIntoTheDatabase() async throws {
+        let store = try await Self.store(seeded: [Self.monday])
+        let client = withDependencies {
+            $0.defaultDatabase = store.dependencies.defaultDatabase
+        } operation: {
+            HistoryClient.live
+        }
+
+        try await client.save(Self.draft(Self.tuesday))
+        try await store.state.$entries.load()
+
+        #expect(store.state.entries.map(\.date) == [Self.tuesday, Self.monday])
+    }
+
     @Test func doneDismissesTheSheet() async throws {
         let dismissed = LockIsolated(false)
         let store = try await Self.store(seeded: []) {
@@ -71,19 +85,7 @@ import TestSupport
         let database = try historyDatabase()
         try await database.write { db in
             for date in dates {
-                try HistoryEntry.insert {
-                    HistoryEntry.Draft(
-                        recordedAt: date,
-                        serverProvider: "jablonka.cz",
-                        serverCity: "Prague",
-                        pingMilliseconds: 6,
-                        downloadMbps: 248,
-                        uploadMbps: nil,
-                        ipAddress: nil,
-                        ipProvider: nil
-                    )
-                }
-                .execute(db)
+                try HistoryEntry.insert { draft(date) }.execute(db)
             }
         }
         let store = TestStore(initialState: History.State()) {
@@ -94,5 +96,18 @@ import TestSupport
         }
         try await store.state.$entries.load()
         return store
+    }
+
+    nonisolated static func draft(_ date: Date) -> HistoryEntry.Draft {
+        HistoryEntry.Draft(
+            recordedAt: date,
+            serverProvider: "jablonka.cz",
+            serverCity: "Prague",
+            pingMilliseconds: 6,
+            downloadMbps: 248,
+            uploadMbps: nil,
+            ipAddress: nil,
+            ipProvider: nil
+        )
     }
 }

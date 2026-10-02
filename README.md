@@ -148,6 +148,14 @@ mobile data and produce a mixed result.
 **HTTPS throughout.** With `secured=only` the directory returns `https://…wifiman.me` addresses with valid
 certificates, on the same unusual ports. The app has no App Transport Security exception.
 
+**Only Ubiquiti's servers.** The app sends a test token and up to 25 s of traffic to the server it picks, so it accepts
+only `https` hosts under `wifiman.me` from the directory and drops anything else, even if the directory ever names
+another host.
+
+**As little of your location as needed.** The app asks for a fix accurate to about a kilometre and sends the directory
+coordinates rounded to two decimals (about 1 km): enough to pick the closest servers, no more. History stays on the
+device, in the app's own container, which the system encrypts at rest.
+
 **What the app doesn't do.** It doesn't send results anywhere (the web client posts them to Ubiquiti), and it makes
 one server-list request, one token request and one IP lookup per run, with no automatic retries. A 429 from the directory
 shows "busy, try again in a minute".
@@ -177,8 +185,9 @@ average and say what happened.
   only `SpeedTestFeature` and `HistoryFeature` know about TCA.
 - The reducer owns the flow and every decision; each dependency wraps one piece of I/O (locator, directory, pinger,
   transfer meter). Every reducer test runs against fakes and a test clock, with no network.
-- History is a SQLite table through SQLiteData. The speed-test feature inserts a finished run; the history sheet
-  observes the table with `@FetchAll`; neither knows the other's state. Stopped or interrupted runs aren't kept.
+- History is a SQLite table through SQLiteData. The speed-test feature saves a finished run through a one-call
+  `HistoryClient` dependency and never sees the database; the history sheet observes the table with `@FetchAll`.
+  Stopped or interrupted runs aren't kept.
 - Plain `throws` rather than typed throws: `URLSession`, clocks and cancellation throw untyped errors anyway. Every
   error is mapped to `SpeedTestError` in one place.
 - Strings live in String Catalogs with stable keys and Xcode's generated symbols; numbers use `FormatStyle` in the
@@ -213,12 +222,19 @@ instead of my location.
 
 - The upload number counts bytes handed to the network stack, which is what every client can see.
 - In approximate mode the servers are only as close as the directory's IP geolocation.
+- "Closest" means closest by the coordinates the directory gives. A few entries carry wrong ones (two servers about
+  130 km from Prague are listed a few kilometres away), so such a server can take the place of a closer one among the
+  five. Ping still picks the fastest of them.
 - NAT64 is untested on a real IPv6-only network (see above).
 
 ## Future work
 
 - Snapshot tests of every screen state.
 - Choosing a server by hand: tapping a row in the server list would run the test against it.
+
+## License
+
+MIT, see [LICENSE](LICENSE).
 
 ## How I built this
 
