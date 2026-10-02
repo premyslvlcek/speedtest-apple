@@ -37,9 +37,10 @@ App target (iOS universal + macOS)
 | `DesignSystem` | SwiftUI, Charts | Formatting, colors, the button and card styles, the animated number, the speed chart. It takes plain values. |
 | `HistoryFeature` | DesignSystem, TCA, SQLiteData | The history table and its migration, the reducer and the sheet. |
 
-The app target is thin: the scene (which also opens the database) and the localized Info.plist texts. One multiplatform SwiftUI target covers iPhone,
-iPad and native macOS (not Mac Catalyst). The Mac uses a single `Window`, and the iPad has multiple scenes off, so one
-window going to the background can't stop a test running in another.
+The app target is thin: the scene and the localized Info.plist texts. The scene creates the root store once, and
+prepares the dependencies right before it: the database, and the scripted clients for the UI test. One multiplatform
+SwiftUI target covers iPhone, iPad and native macOS (not Mac Catalyst). The Mac uses a single `Window`, and the iPad
+has multiple scenes off, so one window going to the background can't stop a test running in another.
 
 ## 3. The test flow
 
@@ -193,7 +194,13 @@ decimal. Ping in whole milliseconds, "<1 ms" below one. Numbers are formatted in
   temporary database.
 - **HistoryFeature:** the list's order, deleting a row, and Clear with its confirmation, against a temporary
   migrated database.
+- **UI test:** one smoke test of the real app, launched with `-scriptedRun` (Debug builds only): the four dependency
+  clients are swapped for their scripted versions and the history is kept in memory, so a run takes a few seconds
+  with no network, location or ICMP, and never touches the saved history. It checks only the wiring no package test
+  can: a run fills the three fields and the address, and the app's database keeps it in the history. What a run
+  does, Stop included, is pinned in the reducer tests.
 - **Time:** tests never sleep or read the wall clock. They use `TestClock` on the main serial executor, so a slow CI
   machine can't make a test pass or fail.
 - **CI:** Xcode 26.6 and Xcode 27.0; the package tests on macOS and the iOS simulator, the iOS and macOS app builds,
-  and lint. Every job fails on a compiler warning in this repository's sources.
+  the UI test (its screenshot is kept as an artifact), and lint. Every job fails on a compiler warning in this
+  repository's sources.
