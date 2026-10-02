@@ -45,9 +45,12 @@ public struct SpeedTestScene: Scene {
         #if os(macOS)
             Window(Text(.appTitle), id: "speed-test") {
                 SpeedTestView(store: Self.store)
-                    .frame(minWidth: 380, idealWidth: 420, minHeight: 600, idealHeight: 720)
+                    .frame(minWidth: 700, idealWidth: 820, minHeight: 560, idealHeight: 680)
             }
             .windowResizability(.contentSize)
+            .commands {
+                SpeedTestCommands(store: Self.store)
+            }
         #else
             WindowGroup {
                 SpeedTestView(store: Self.store)

@@ -415,6 +415,78 @@
         }
       }
     },
+    "menu.history" : {
+      "comment" : "Mac Test menu item (⌘Y) that opens the list of past results.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobrazit historii"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show History"
+          }
+        }
+      }
+    },
+    "menu.startTest" : {
+      "comment" : "Mac Test menu item (⌘R) that starts a speed test.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spustit test"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start Test"
+          }
+        }
+      }
+    },
+    "menu.stopTest" : {
+      "comment" : "Mac Test menu item (⌘R) that stops the running speed test.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zastavit test"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop Test"
+          }
+        }
+      }
+    },
+    "menu.test" : {
+      "comment" : "Title of the Mac's Test menu.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Test"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Test"
+          }
+        }
+      }
+    },
     "note.enableInSettings" : {
       "comment" : "Button under the location-off note; opens Settings.",
       "extractionState" : "manual",

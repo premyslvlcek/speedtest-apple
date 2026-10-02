@@ -16,8 +16,9 @@ struct StartStopButton: View {
     var body: some View {
         Button(action: action) {
             label
+                .frame(maxWidth: .infinity)
         }
-        .buttonStyle(CapsuleButtonStyle(role: title == .stop ? .stop : .start))
+        .startStopButtonStyle(title == .stop ? .stop : .start)
         .accessibilityIdentifier("startStopButton")
     }
 
