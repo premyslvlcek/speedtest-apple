@@ -18,7 +18,7 @@ import SpeedTestKit
 /// Dependency clients for a run, built per test. Each answers at once, so with `TestStore`'s serial executor
 /// the actions arrive in a fixed order: one `pinged` per distinct host, in candidate order.
 enum RunFakes {
-    static let token = TransferToken(value: "token-1", ttl: .seconds(80))
+    static let token = TransferToken(value: "token-1")
 
     static func locator(_ outcome: LocationOutcome = .located(Fixtures.prague)) -> Locator {
         Locator(locate: { _ in outcome })
@@ -61,7 +61,7 @@ enum RunFakes {
 
     /// Records every entry a finished run saves.
     final class History: Sendable {
-        private let entries = LockIsolated<[HistoryEntry.Draft]>([])
+        private let entries = LockIsolated<[HistoryEntry]>([])
 
         var client: HistoryClient {
             HistoryClient(save: { entry in
@@ -71,7 +71,7 @@ enum RunFakes {
 
         /// What was saved, once the store's effects have finished: the save runs in an effect, after the action
         /// that finishes the run.
-        func saved(_ store: TestStoreOf<SpeedTest>) async -> [HistoryEntry.Draft] {
+        func saved(_ store: TestStoreOf<SpeedTest>) async -> [HistoryEntry] {
             await store.finish()
             return entries.value
         }

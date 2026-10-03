@@ -22,6 +22,8 @@ struct TransferLedger: Sendable {
     private(set) var aliveConnections: Int
     private(set) var lastError: (any Error)?
     private(set) var isCancelled = false
+    private var failedConnections = 0
+    private var refusedConnections = 0
     private var bytesByTask: [Int: Int64] = [:]
     private var rejectedTasks: [Int: HTTPStatusError] = [:]
 
@@ -29,8 +31,14 @@ struct TransferLedger: Sendable {
         aliveConnections = connections
     }
 
+    /// Some connection is still going: not every one has failed, and the transfer wasn't cancelled.
     var isAlive: Bool {
-        aliveConnections > 0
+        !isCancelled && aliveConnections > 0
+    }
+
+    /// Every connection that failed was refused by the server (a non-2xx answer); none was lost.
+    var wasRefused: Bool {
+        failedConnections > 0 && refusedConnections == failedConnections
     }
 
     /// Counts bytes moved by a task. Returns `true` when these are the transfer's first bytes.
@@ -80,6 +88,10 @@ struct TransferLedger: Sendable {
 
     private mutating func fail(with error: any Error) -> Completion {
         lastError = error
+        failedConnections += 1
+        if error is HTTPStatusError {
+            refusedConnections += 1
+        }
         aliveConnections = max(aliveConnections - 1, 0)
         return .connectionFailed
     }

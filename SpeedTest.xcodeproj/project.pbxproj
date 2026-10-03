@@ -399,7 +399,6 @@
 				"ENABLE_OUTGOING_NETWORK_CONNECTIONS[sdk=macosx*]" = YES;
 				ENABLE_PREVIEWS = YES;
 				"ENABLE_RESOURCE_ACCESS_LOCATION[sdk=macosx*]" = YES;
-				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SpeedTest/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Speed Test";
@@ -449,7 +448,6 @@
 				"ENABLE_OUTGOING_NETWORK_CONNECTIONS[sdk=macosx*]" = YES;
 				ENABLE_PREVIEWS = YES;
 				"ENABLE_RESOURCE_ACCESS_LOCATION[sdk=macosx*]" = YES;
-				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SpeedTest/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Speed Test";

@@ -9,7 +9,6 @@
 public struct PingResult: Sendable, Equatable {
     /// Round-trip times of the replies, in the order they arrived.
     public var rtts: [Duration]
-    /// How many requests were sent.
     public var sent: Int
 
     public init(rtts: [Duration], sent: Int) {

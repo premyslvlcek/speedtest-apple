@@ -8,13 +8,9 @@
 import Charts
 import SwiftUI
 
-public struct ChartPoint: Sendable, Equatable, Identifiable {
+public struct ChartPoint: Sendable, Equatable {
     public var seconds: Double
     public var mbps: Double
-
-    public var id: Double {
-        seconds
-    }
 
     public init(seconds: Double, mbps: Double) {
         self.seconds = seconds
@@ -79,8 +75,8 @@ public struct SpeedChart: View, Animatable {
                 .interpolationMethod(.monotone)
             }
 
-            // A ForEach over zero or one value instead of `if let`: conditional chart content produced
-            // warnings and crashes with deployment targets below 27 in the iOS 27 betas.
+            // A ForEach over zero or one value instead of `if let`: with the iOS 27 SDK and a deployment target
+            // below 27, conditional chart content warned and crashed (seen in the betas; CI still builds with it).
             ForEach(averageLine, id: \.self) { value in
                 RuleMark(y: .value(Text(.chartAverage), value))
                     .foregroundStyle(tint.opacity(0.8))
@@ -91,22 +87,31 @@ public struct SpeedChart: View, Animatable {
         .chartYScale(domain: 0 ... Self.upperBound(points: points, average: average))
         // Only the head point animates (`animatableData`); Charts' own animation of every mark would fight it.
         .transaction { $0.animation = nil }
+        // Nothing is drawn outside the plot, whatever the curve does between two points.
+        .chartPlotStyle { $0.clipped() }
         .chartXAxis(.hidden)
         .chartYAxis {
             AxisMarks(position: .trailing, values: .automatic(desiredCount: 3))
         }
-        // At least the old fixed height; it may grow, so axis labels at large text sizes aren't clipped.
-        .frame(minHeight: 120, maxHeight: 160)
+        // Before the first point there's no scale worth showing (it would read 0 to 1 Mbps).
+        .chartYAxis(points.isEmpty ? .hidden : .automatic)
+        // Fixed, so the card below never moves; the axis labels stop growing at xxxLarge to fit it.
+        .frame(height: Self.height)
         .accessibilityHidden(true)
     }
 
-    /// The points as drawn: the newest one replaced by the animated head.
+    /// The chart's height, and the empty space the screen keeps for it when there's no chart.
+    public static let height: CGFloat = 140
+
+    /// The points as drawn: the newest one replaced by the animated head. A point at or after the head's time is
+    /// left out: when a sample arrives the head starts where the previous point is, and two points at the same time
+    /// make the smoothed curve overshoot far above the plot.
     nonisolated static func drawnPoints(_ points: [ChartPoint], head: ChartPoint) -> [ChartPoint] {
         guard !points.isEmpty else {
             return []
         }
 
-        return points.dropLast() + [head]
+        return points.dropLast().filter { $0.seconds < head.seconds } + [head]
     }
 
     private var averageLine: [Double] {

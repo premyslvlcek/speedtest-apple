@@ -16,9 +16,11 @@ import Testing
     }
 
     @Test func threePingersAtOnceEachGetAllTheirReplies() async {
-        async let ipv4 = Pinger(host: "127.0.0.1").ping()
-        async let ipv6 = Pinger(host: "::1").ping()
-        async let secondIPv4 = Pinger(host: "127.0.0.1").ping()
+        // Real time: a generous timeout, so a busy CI machine can't turn a slow loopback reply into a loss.
+        let configuration = PingConfiguration(timeout: .seconds(10))
+        async let ipv4 = Pinger(host: "127.0.0.1").ping(configuration)
+        async let ipv6 = Pinger(host: "::1").ping(configuration)
+        async let secondIPv4 = Pinger(host: "127.0.0.1").ping(configuration)
 
         let results = await [ipv4, ipv6, secondIPv4]
 

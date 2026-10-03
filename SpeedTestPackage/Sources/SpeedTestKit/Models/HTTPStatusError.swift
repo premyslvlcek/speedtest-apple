@@ -15,4 +15,7 @@ public struct HTTPStatusError: Error, Sendable, Equatable {
 
     /// 429: the service asks the client to slow down.
     static let tooManyRequests = 429
+
+    /// HTTP's 2xx range; any other status is an error.
+    static let successCodes = 200 ..< 300
 }

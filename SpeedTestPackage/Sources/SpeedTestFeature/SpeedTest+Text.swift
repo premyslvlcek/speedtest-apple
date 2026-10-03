@@ -6,69 +6,80 @@
 //
 
 import DesignSystem
+import ICMP
 import SpeedTestKit
 import SwiftUI
 
 /// Turns the presentation values into localized text, through the String Catalog's generated symbols.
 extension SpeedTest.State.PhaseLabel {
-    var text: Text {
+    var resource: LocalizedStringResource {
         switch self {
         case .connecting:
-            Text(.phaseConnecting)
+            .phaseConnecting
 
         case .downloadAverage:
-            Text(.phaseDownloadAverage)
+            .phaseDownloadAverage
 
         case let .downloading(seconds):
-            Text(.phaseDownloading(SpeedFormat.elapsed(seconds: seconds)))
+            .phaseDownloading(SpeedFormat.elapsed(seconds: seconds))
 
         case .failed:
-            Text(.phaseFailed)
+            .phaseFailed
 
         case .findingServers:
-            Text(.phaseFindingServers)
+            .phaseFindingServers
 
-        case let .interrupted(reason):
-            reason.text
+        case let .interrupted(reason, average: nil):
+            reason.resource
+
+        case let .interrupted(reason, average: .partialDownload):
+            .phaseInterruptedPartialAverage(String(localized: reason.resource))
+
+        case let .interrupted(reason, average: .download):
+            .phaseInterruptedDownloadAverage(String(localized: reason.resource))
 
         case .locating:
-            Text(.phaseLocating)
+            .phaseLocating
 
         case let .pinging(serverCount):
-            Text(.phasePinging(serverCount))
+            .phasePinging(serverCount)
 
         case .ready:
-            Text(.phaseReady)
+            .phaseReady
 
         case let .stopped(atSeconds: seconds?):
-            Text(.phaseStoppedAt(SpeedFormat.elapsed(seconds: seconds)))
+            .phaseStoppedAt(SpeedFormat.elapsed(seconds: seconds))
 
         case .stopped(atSeconds: nil):
-            Text(.phaseStopped)
+            .phaseStopped
 
         case .stoppedAfterDownload:
-            Text(.phaseStoppedAfterDownload)
+            .phaseStoppedAfterDownload
 
         case let .uploading(seconds):
-            Text(.phaseUploading(SpeedFormat.elapsed(seconds: seconds)))
+            .phaseUploading(SpeedFormat.elapsed(seconds: seconds))
         }
+    }
+
+    var text: Text {
+        Text(resource)
     }
 }
 
 extension SpeedTest.Interruption {
-    var text: Text {
+    var resource: LocalizedStringResource {
         switch self {
         case .background:
-            Text(.phaseInterruptedBackground)
+            .phaseInterruptedBackground
 
         case .connectionLost:
-            Text(.phaseInterruptedConnectionLost)
+            .phaseInterruptedConnectionLost
 
         case .networkChanged:
-            Text(.phaseInterruptedNetworkChanged)
+            .phaseInterruptedNetworkChanged
 
         case .stopped:
-            Text(.phaseStopped)
+            .phaseStopped
         }
     }
 }
@@ -99,29 +110,45 @@ extension SpeedTest.State.Note {
 }
 
 extension SpeedTestError {
-    var message: Text {
+    var messageResource: LocalizedStringResource {
         switch self {
         case .connectionLost:
-            Text(.errorConnectionLost)
+            .errorConnectionLost
 
         case .directoryUnavailable:
-            Text(.errorDirectoryUnavailable)
+            .errorDirectoryUnavailable
 
         case .networkChanged:
-            Text(.errorNetworkChanged)
+            .errorNetworkChanged
 
         case .noServers:
-            Text(.errorNoServers)
+            .errorNoServers
 
         case .offline:
-            Text(.errorOffline)
+            .errorOffline
 
         case .rateLimited:
-            Text(.errorRateLimited)
+            .errorRateLimited
 
         case .transferFailed:
-            Text(.errorTransferFailed)
+            .errorTransferFailed
         }
+    }
+
+    var message: Text {
+        Text(messageResource)
+    }
+}
+
+extension PingResult {
+    /// "6 ms", "6 ms · 3/5" or "no reply", as a servers row shows it.
+    var summary: String {
+        SpeedFormat.pingSummary(milliseconds: median?.inMilliseconds, received: received, sent: sent)
+    }
+
+    /// The same as VoiceOver reads it: "6 ms, 3 of 5 replies".
+    var spokenSummary: String {
+        SpeedFormat.spokenPingSummary(milliseconds: median?.inMilliseconds, received: received, sent: sent)
     }
 }
 
@@ -145,19 +172,28 @@ extension SpeedTest.State {
             SpeedFormat.placeholder
 
         case .noReply:
-            SpeedFormat.pingSummary(milliseconds: nil, received: 0, sent: 0)
+            SpeedFormat.noReply()
 
         case let .result(milliseconds, received, sent):
             SpeedFormat.pingSummary(milliseconds: milliseconds, received: received, sent: sent)
         }
     }
 
+    /// The Ping row as VoiceOver reads it: "3 of 5 replies", not "3/5".
+    var spokenPing: String? {
+        guard case let .result(milliseconds, received, sent) = pingValue else {
+            return nil
+        }
+
+        return SpeedFormat.spokenPingSummary(milliseconds: milliseconds, received: received, sent: sent)
+    }
+
     var downloadString: String {
         Self.speedString(downloadValue)
     }
 
-    var downloadTag: String? {
-        Self.tagString(downloadValue?.tag)
+    var downloadTag: ResultTag? {
+        Self.tag(downloadValue?.tag)
     }
 
     var uploadString: String {
@@ -176,12 +212,17 @@ extension SpeedTest.State {
         }
     }
 
-    var uploadTag: String? {
+    var uploadTag: ResultTag? {
         guard case let .speed(value) = uploadValue else {
             return nil
         }
 
-        return Self.tagString(value.tag)
+        return Self.tag(value.tag)
+    }
+
+    /// "232 Mbps": a speed field's text for any value, so the field can count through the values in between.
+    static func speedString(mbps: Double) -> String {
+        String(localized: .valueSpeed(SpeedFormat.mbps(mbps)))
     }
 
     private static func speedString(_ value: SpeedValue?) -> String {
@@ -189,19 +230,53 @@ extension SpeedTest.State {
             return SpeedFormat.placeholder
         }
 
-        return String(localized: .valueSpeed(SpeedFormat.mbps(value.mbps)))
+        return speedString(mbps: value.mbps)
     }
 
-    private static func tagString(_ tag: ValueTag?) -> String? {
+    private static func tag(_ tag: ValueTag?) -> ResultTag? {
         switch tag {
         case .average:
-            String(localized: .tagAverage)
+            ResultTag(text: String(localized: .tagAverage), spokenText: String(localized: .accessibilityTagAverage))
+
+        case .none:
+            nil
 
         case .partialAverage:
-            String(localized: .tagPartialAverage)
+            ResultTag(
+                text: String(localized: .tagPartialAverage),
+                spokenText: String(localized: .accessibilityTagPartialAverage)
+            )
+        }
+    }
+}
 
-        case nil:
+extension SpeedTest.State {
+    /// What VoiceOver says once, when a run ends: the result, why it stopped (with what was measured), or what went
+    /// wrong. Nothing while a run is going or before the first one.
+    var announcement: String? {
+        switch phase {
+        case .finished:
+            results.isEmpty ? nil : results.joined(separator: ". ")
+
+        case .interrupted:
+            ([String(localized: phaseLabel.resource)] + results).joined(separator: ". ")
+
+        case let .failed(error):
+            [String(localized: phaseLabel.resource), String(localized: error.messageResource)].joined(separator: ". ")
+
+        case .connecting, .downloading, .fetchingServers, .idle, .locating, .pinging, .uploading:
             nil
         }
+    }
+
+    private var results: [String] {
+        var results: [String] = []
+        if let download {
+            results.append(String(localized: .accessibilityDownloadAverage(SpeedFormat.mbps(download.averageMbps))))
+        }
+        if let upload {
+            results.append(String(localized: .accessibilityUploadAverage(SpeedFormat.mbps(upload.averageMbps))))
+        }
+        return results
     }
 }

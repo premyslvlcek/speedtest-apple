@@ -12,7 +12,9 @@ import Foundation
 /// Uses an unprivileged datagram socket (`SOCK_DGRAM` + `IPPROTO_ICMP`/`IPPROTO_ICMPV6`), so it needs no
 /// root and works in an app. The socket is `connect()`ed, so the kernel delivers only this host's replies;
 /// a random identifier and payload token per call keep another pinger's replies out as well.
-public actor Pinger {
+///
+/// A value with no mutable state: every call has its own socket, identifier and stream.
+public struct Pinger: Sendable {
     fileprivate enum Event: Sendable {
         case sent(UInt16, time: Duration)
         case datagram(Data, time: Duration)
@@ -40,6 +42,8 @@ public actor Pinger {
         self.openSocket = openSocket
     }
 
+    /// `@concurrent`: the work runs off the caller's actor, so pinging from the main actor never runs there.
+    @concurrent
     public func ping(_ configuration: PingConfiguration = .standard) async -> PingResult {
         precondition(
             (1 ... Int(UInt16.max) + 1).contains(configuration.count),
@@ -75,7 +79,7 @@ public actor Pinger {
 
         let identifier = UInt16.random(in: .min ... .max)
         let token = Data((0 ..< Self.tokenLength).map { _ in UInt8.random(in: .min ... .max) })
-        // A local copy, so the child task below captures the clock and not the actor itself.
+        // A local copy, so the child task below captures only the clock.
         let clock = clock
 
         return await withTaskGroup(of: Void.self) { group in

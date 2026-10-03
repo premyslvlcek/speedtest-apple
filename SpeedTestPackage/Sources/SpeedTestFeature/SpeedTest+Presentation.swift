@@ -22,8 +22,14 @@ extension SpeedTest.State {
         case downloadAverage
         case stopped(atSeconds: Double?)
         case stoppedAfterDownload
-        case interrupted(SpeedTest.Interruption)
+        case interrupted(SpeedTest.Interruption, average: ShownAverage?)
         case failed
+    }
+
+    /// Which average the big number shows after an interruption, so the label can say what it is.
+    enum ShownAverage: Equatable, Sendable {
+        case partialDownload
+        case download
     }
 
     enum ValueTag: Equatable, Sendable {
@@ -31,11 +37,9 @@ extension SpeedTest.State {
         case partialAverage
     }
 
-    /// A finished (or stopped) transfer's result. The rows show only results; the big number and the chart carry
-    /// the live value.
     struct SpeedValue: Equatable, Sendable {
         var mbps: Double
-        var tag: ValueTag
+        var tag: ValueTag?
     }
 
     enum ServerValue: Equatable, Sendable {
@@ -104,7 +108,7 @@ extension SpeedTest.State {
         }
     }
 
-    /// The live speed of the running phase; the download average once it's known and nothing else is live.
+    /// The live speed of the running phase; once the run has ended, the download average.
     var bigNumber: Double? {
         switch phase {
         case .downloading:
@@ -113,10 +117,11 @@ extension SpeedTest.State {
         case .uploading:
             uploadSamples.last?.currentMbps
 
-        case .connecting(.upload), .finished, .interrupted:
+        case .finished, .interrupted:
             download?.averageMbps
 
-        case .connecting(.download), .failed, .fetchingServers, .idle, .locating, .pinging:
+        case .connecting, .failed, .fetchingServers, .idle, .locating, .pinging:
+            // While the upload connects, the download average under "Connecting…" would read as the upload's.
             nil
         }
     }
@@ -142,7 +147,15 @@ extension SpeedTest.State {
     }
 
     var downloadValue: SpeedValue? {
-        download.map { SpeedValue(mbps: $0.averageMbps, tag: $0.wasPartial ? .partialAverage : .average) }
+        if let download {
+            return SpeedValue(mbps: download.averageMbps, tag: download.wasPartial ? .partialAverage : .average)
+        }
+
+        if phase == .downloading, let last = downloadSamples.last {
+            return SpeedValue(mbps: last.currentMbps, tag: nil)
+        }
+
+        return nil
     }
 
     var uploadValue: UploadValue {
@@ -150,11 +163,16 @@ extension SpeedTest.State {
             return .speed(SpeedValue(mbps: upload.averageMbps, tag: upload.wasPartial ? .partialAverage : .average))
         }
 
+        if phase == .uploading, let last = uploadSamples.last {
+            return .speed(SpeedValue(mbps: last.currentMbps, tag: nil))
+        }
+
         if isUploadUnavailable {
             return .unavailable
         }
 
-        if case .interrupted = phase, uploadSamples.isEmpty {
+        if case .interrupted = phase, download != nil, uploadSamples.isEmpty {
+            // The download ran and the upload never started; before that, both fields are just empty.
             return .notRun
         }
 
@@ -188,7 +206,7 @@ extension SpeedTest.State {
         return error
     }
 
-    /// What the button and the Mac's ⌘R do: Try again retries; every other title starts or stops a run.
+    /// What the button and the Mac's ⌘R do: Try Again retries; every other title starts or stops a run.
     var buttonAction: SpeedTest.Action.View {
         buttonTitle == .tryAgain ? .retryTapped : .startStopTapped
     }
@@ -199,13 +217,14 @@ extension SpeedTest.State {
         }
 
         switch phase {
-        case .finished:
+        case .finished, .interrupted:
+            // A run has ended, finished or not: the next one runs it again.
             return .runAgain
 
         case .failed:
             return .tryAgain
 
-        case .connecting, .downloading, .fetchingServers, .idle, .interrupted, .locating, .pinging, .uploading:
+        case .connecting, .downloading, .fetchingServers, .idle, .locating, .pinging, .uploading:
             return .start
         }
     }
@@ -220,7 +239,7 @@ extension SpeedTest.State {
 
     private func interruptionLabel(_ reason: SpeedTest.Interruption) -> PhaseLabel {
         guard reason == .stopped else {
-            return .interrupted(reason)
+            return .interrupted(reason, average: download.map { $0.wasPartial ? .partialDownload : .download })
         }
 
         if let download, !download.wasPartial {
@@ -232,6 +251,15 @@ extension SpeedTest.State {
 }
 
 extension SpeedTest.State.PhaseLabel {
+    /// An interruption the user didn't ask for, shown in the warning color.
+    var isWarning: Bool {
+        if case .interrupted = self {
+            return true
+        }
+
+        return false
+    }
+
     /// The elapsed time a label shows, if it shows one.
     var seconds: Double? {
         switch self {

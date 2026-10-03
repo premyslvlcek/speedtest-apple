@@ -53,12 +53,12 @@ import Testing
         #expect(Self.queryItems(of: request) == [URLQueryItem(name: "secured", value: "only")])
     }
 
-    @Test func tokenIsAPostThatReturnsTheTokenAndItsLifetime() async throws {
+    @Test func tokenIsAPostThatReturnsTheToken() async throws {
         let (directory, requests) = try Self.recordingDirectory(answering: "token")
 
         let token = try await directory.token()
 
-        #expect(token == TransferToken(value: "377c603e-d8c6-422b-892f-bdac396258fc", ttl: .seconds(80)))
+        #expect(token == TransferToken(value: "377c603e-d8c6-422b-892f-bdac396258fc"))
         let request = try #require(requests.value.first)
         #expect(request.httpMethod == "POST")
         #expect(request.url?.path() == "/api/v1/tokens")

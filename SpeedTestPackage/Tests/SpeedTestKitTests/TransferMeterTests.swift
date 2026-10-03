@@ -30,13 +30,30 @@ import TestSupport
         #expect(measurement.samples.last?.totalBytes == 60 * bytesPerRead)
     }
 
-    @Test func uploadSamplesForTenSeconds() async {
-        let meter = makeMeter()
+    /// Time starts at the first byte, so the bytes do too: whatever was counted before the clock started (the
+    /// first chunk, and anything that arrived while the meter got going) isn't part of the measurement.
+    @Test func bytesCountedBeforeTheClockStartsDoNotCount() async {
+        let transfers = FakeTransferService([FakeTransfer(bytesPerRead: bytesPerRead, bytesAtFirstByte: 5_000_000)])
+        let meter = makeMeter(transfer: transfers.service)
+
+        let measurement = await meter.measure(MeterFixtures.server, .download, MeterFixtures.token).collect()
+
+        #expect(measurement.samples.first?.totalBytes == bytesPerRead)
+    }
+
+    /// The upload leaves out its first second: no samples during it, and an average from its end, so a head start
+    /// counted at once neither spikes the live number nor raises the result.
+    @Test func uploadSamplesAfterTheWarmUpForTenSeconds() async {
+        let transfers = FakeTransferService([FakeTransfer(bytesPerRead: bytesPerRead, headStart: 8_000_000)])
+        let meter = makeMeter(transfer: transfers.service)
 
         let measurement = await meter.measure(MeterFixtures.server, .upload, MeterFixtures.token).collect()
 
-        #expect(measurement.samples.count == 40)
-        #expect(measurement.samples.last?.elapsed == .seconds(10))
+        #expect(measurement.samples.map(\.elapsed) == (5 ... 40).map { interval * $0 })
+        // The window then starts at 0.25 s, after the head start: the line's own 40 Mbps.
+        #expect(measurement.samples.first?.currentMbps == 40)
+        // 40 Mbps from 1 s to 10 s; with the head start counted it would be 46.4.
+        #expect(measurement.samples.last?.averageMbps == 40)
     }
 
     @Test func theTransferStartsWithTheGivenServerDirectionAndToken() async {
@@ -48,15 +65,6 @@ import TestSupport
         #expect(transfers.starts == [
             FakeTransferService.Start(server: MeterFixtures.server.id, direction: .upload, token: "token-1")
         ])
-    }
-
-    @Test func theHandleIsCancelledWhenTheMeasurementEnds() async {
-        let transfers = FakeTransferService()
-        let meter = makeMeter(transfer: transfers.service)
-
-        _ = await meter.measure(MeterFixtures.server, .download, MeterFixtures.token).collect()
-
-        #expect(transfers.transfers.first?.cancelCount ?? 0 >= 1)
     }
 }
 

@@ -19,11 +19,13 @@ final class FakeTransfer: Sendable {
         case never
         /// Throws this error at once, as if every connection failed.
         case fails(any Error)
+        /// Suspends until the handle is cancelled, then ends with this result: a real error or a late byte that
+        /// lands just as the stall timeout cancels the connections.
+        case whenCancelled(Result<Void, any Error>)
     }
 
     private struct State {
         var reads = 0
-        var cancelCount = 0
         var isCancelled = false
         var waiter: CheckedContinuation<Void, any Error>?
     }
@@ -32,6 +34,13 @@ final class FakeTransfer: Sendable {
     let bytesPerRead: Int64
     /// `isAlive()` returns false once `totalBytes()` has been read this many times. nil means always alive.
     let aliveForReads: Int?
+    /// When every connection has gone, whether the server refused them (a non-2xx answer).
+    let endsRefused: Bool
+    /// Already counted when the first byte arrives, on top of `bytesPerRead × n`.
+    let bytesAtFirstByte: Int64
+    /// Counted all at once by the first sample after t0 and kept from then on, like the chunk per connection the
+    /// network stack takes at the start of an upload.
+    let headStart: Int64
     private let state = LockIsolated(State())
     private let cancellations: AsyncStream<Void>.Continuation
     /// Yields once for every `cancel()` call.
@@ -41,16 +50,18 @@ final class FakeTransfer: Sendable {
         firstByte: FirstByte = .immediate,
         // 1.25 MB per read: at the standard sample interval, a steady 40 Mbps.
         bytesPerRead: Int64 = 1_250_000,
-        aliveForReads: Int? = nil
+        aliveForReads: Int? = nil,
+        endsRefused: Bool = false,
+        bytesAtFirstByte: Int64 = 0,
+        headStart: Int64 = 0
     ) {
+        self.bytesAtFirstByte = bytesAtFirstByte
+        self.headStart = headStart
         self.firstByteBehavior = firstByte
         self.bytesPerRead = bytesPerRead
         self.aliveForReads = aliveForReads
+        self.endsRefused = endsRefused
         (cancelled, cancellations) = AsyncStream.makeStream()
-    }
-
-    var cancelCount: Int {
-        state.value.cancelCount
     }
 
     var handle: TransferHandle {
@@ -58,6 +69,7 @@ final class FakeTransfer: Sendable {
             firstByte: { try await self.waitForFirstByte() },
             totalBytes: { self.read() },
             isAlive: { self.isAlive },
+            wasRefused: { self.endsRefused && !self.isAlive },
             cancel: { self.cancel() }
         )
     }
@@ -68,7 +80,7 @@ final class FakeTransfer: Sendable {
         case .fails:
             false
 
-        case .never:
+        case .never, .whenCancelled:
             !state.value.isCancelled
 
         case .immediate:
@@ -84,7 +96,8 @@ final class FakeTransfer: Sendable {
             $0.reads += 1
             return $0.reads
         }
-        return Int64(count) * bytesPerRead
+        // The first read is the one at t0.
+        return bytesAtFirstByte + (count > 1 ? headStart : 0) + Int64(count) * bytesPerRead
     }
 
     private func waitForFirstByte() async throws {
@@ -95,7 +108,7 @@ final class FakeTransfer: Sendable {
         case let .fails(error):
             throw error
 
-        case .never:
+        case .never, .whenCancelled:
             try await withTaskCancellationHandler {
                 try await withCheckedThrowingContinuation { continuation in
                     let resumeNow = state.withValue {
@@ -116,7 +129,6 @@ final class FakeTransfer: Sendable {
     }
 
     private func cancel() {
-        state.withValue { $0.cancelCount += 1 }
         cancellations.yield()
         resumeWaiter()
     }
@@ -127,7 +139,11 @@ final class FakeTransfer: Sendable {
             defer { state.waiter = nil }
             return state.waiter
         }
-        waiter?.resume(throwing: URLError(.cancelled))
+        if case let .whenCancelled(result) = firstByteBehavior {
+            waiter?.resume(with: result)
+        } else {
+            waiter?.resume(throwing: URLError(.cancelled))
+        }
     }
 }
 

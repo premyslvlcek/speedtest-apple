@@ -7,16 +7,12 @@
 
 /// How the transfer service loads the line. Tuned on a device.
 public struct TransferConfiguration: Sendable, Equatable {
-    /// Parallel connections to the one server. The web client uses 6.
-    public var connections: Int
+    /// Parallel connections to the one server. The web client uses 6 to one server, 12 across four.
+    public let connections = 4
     /// `?size=` for each `/download` request: 50 MB, what Ubiquiti's own web client starts with.
-    public var downloadRequestBytes: Int
+    public let downloadRequestBytes = 50_000_000
     /// One random buffer, allocated once and sent again and again with `POST /upload`.
-    public var uploadBodyBytes: Int
+    public let uploadBodyBytes = 8_000_000
 
-    public init(connections: Int = 4, downloadRequestBytes: Int = 50_000_000, uploadBodyBytes: Int = 8_000_000) {
-        self.connections = connections
-        self.downloadRequestBytes = downloadRequestBytes
-        self.uploadBodyBytes = uploadBodyBytes
-    }
+    public init() {}
 }

@@ -37,10 +37,10 @@ public struct Coordinate: Sendable, Hashable {
     }
 
     /// Mean Earth radius in meters (IUGG).
-    static let earthRadius = 6_371_008.8
+    private static let earthRadius = 6_371_008.8
 
     /// The haversine function, hav(θ) = sin²(θ / 2), which gives the formula its name.
-    static func haversine(_ angle: Double) -> Double {
+    private static func haversine(_ angle: Double) -> Double {
         let halfSine = sin(angle / 2)
         return halfSine * halfSine
     }

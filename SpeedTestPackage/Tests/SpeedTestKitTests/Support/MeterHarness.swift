@@ -26,7 +26,7 @@ func makeMeter(
 
 enum MeterFixtures {
     static let server = Server.fixture("vinohrady")
-    static let token = TransferToken(value: "token-1", ttl: .seconds(80))
+    static let token = TransferToken(value: "token-1")
 }
 
 /// Everything one measurement produced.

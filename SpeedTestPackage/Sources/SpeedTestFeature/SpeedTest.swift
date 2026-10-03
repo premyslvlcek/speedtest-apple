@@ -146,7 +146,7 @@ public struct SpeedTest: Sendable {
             case let .tokenResponse(.success(token)):
                 state.token = token
 
-                return measureDownload(state: state)
+                return measureDownload(state: &state)
 
             case let .sampled(direction, sample):
                 state.record(sample, direction)
@@ -161,10 +161,12 @@ public struct SpeedTest: Sendable {
 
             case .transferResponse(.upload, .success):
                 state.finishUpload()
+
                 return saveIfFinished(state: state)
 
             case let .transferResponse(.upload, .failure(error)):
                 state.uploadFailed(error)
+
                 return saveIfFinished(state: state)
 
             case .view(.historyTapped):

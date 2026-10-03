@@ -6,7 +6,7 @@
 //
 
 /// The IP version an address, a socket and a packet belong to.
-public enum AddressFamily: Sendable, Equatable {
+enum AddressFamily: Sendable, Equatable {
     case ipv4
     case ipv6
 }

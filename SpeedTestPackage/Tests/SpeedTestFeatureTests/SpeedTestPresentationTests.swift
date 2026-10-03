@@ -5,6 +5,7 @@
 //  Created by Premysl Vlcek on 01.10.2026.
 //
 
+import DesignSystem
 import Foundation
 import ICMP
 import SpeedTestKit
@@ -26,7 +27,6 @@ import Testing
         #expect(state.notes.isEmpty)
         #expect(state.failure == nil)
         #expect(state.buttonTitle == .start)
-        #expect(state.showsIntroduction)
         #expect(!state.isApproximate)
     }
 
@@ -37,10 +37,9 @@ import Testing
         #expect(state.pingValue == .none)
         #expect(state.bigNumber == nil)
         #expect(state.buttonTitle == .stop)
-        #expect(!state.showsIntroduction)
     }
 
-    @Test func downloadingShowsTheLiveNumber() throws {
+    @Test func downloadingShowsTheLiveValue() throws {
         let state = SpeedTest.State.downloadingFixture
         let last = try #require(state.downloadSamples.last)
         let selection = try #require(state.selection)
@@ -49,8 +48,7 @@ import Testing
 
         #expect(state.phaseLabel == .downloading(seconds: last.elapsed.inSeconds))
         #expect(state.bigNumber == last.currentMbps)
-        // The row waits for the result; the big number carries the live value.
-        #expect(state.downloadValue == nil)
+        #expect(state.downloadValue == .init(mbps: last.currentMbps, tag: nil))
         #expect(state.serverValue == .server(name: selection.server.name))
         #expect(state.pingValue == .result(
             milliseconds: median.inMilliseconds, received: ping.received, sent: ping.sent
@@ -59,7 +57,7 @@ import Testing
         #expect(state.buttonTitle == .stop)
     }
 
-    @Test func uploadingShowsTheLiveNumber() throws {
+    @Test func uploadingShowsTheLiveUpload() throws {
         var state = SpeedTest.State.finishedFixture
         state.upload = nil
         state.uploadSamples = Array(SpeedTest.State.uploadSeries.prefix(8))
@@ -69,7 +67,7 @@ import Testing
         #expect(state.phaseLabel == .uploading(seconds: last.elapsed.inSeconds))
         #expect(state.bigNumber == last.currentMbps)
         #expect(state.downloadValue?.tag == .average)
-        #expect(state.uploadValue == .none)
+        #expect(state.uploadValue == .speed(.init(mbps: last.currentMbps, tag: nil)))
     }
 
     @Test func finishedShowsTheDownloadAverage() throws {
@@ -93,7 +91,7 @@ import Testing
         #expect(state.bigNumber == download.averageMbps)
         #expect(state.downloadValue == .init(mbps: download.averageMbps, tag: .partialAverage))
         #expect(state.uploadValue == .notRun)
-        #expect(state.buttonTitle == .start)
+        #expect(state.buttonTitle == .runAgain)
     }
 
     @Test func stoppedDuringUploadKeepsTheDownloadAverage() throws {
@@ -117,16 +115,27 @@ import Testing
         #expect(state.phaseLabel == .stopped(atSeconds: nil))
         #expect(state.bigNumber == nil)
         #expect(state.downloadValue == nil)
-        #expect(state.uploadValue == .notRun)
+        #expect(state.uploadValue == .none)
     }
 
-    /// Every interruption other than Stop takes the same path; one stands for all.
-    @Test func anInterruptionNamesTheReason() {
-        var state = SpeedTest.State.downloadingFixture
-        state.interrupt(.networkChanged)
+    /// Every interruption other than Stop takes the same path; one reason stands for all. The label says which
+    /// average the big number shows, if any.
+    @Test func anInterruptionNamesTheReasonAndTheAverage() {
+        var downloading = SpeedTest.State.downloadingFixture
+        downloading.interrupt(.networkChanged)
+        #expect(downloading.phaseLabel == .interrupted(.networkChanged, average: .partialDownload))
+        #expect(downloading.downloadValue?.tag == .partialAverage)
 
-        #expect(state.phaseLabel == .interrupted(.networkChanged))
-        #expect(state.downloadValue?.tag == .partialAverage)
+        var uploading = SpeedTest.State.finishedFixture
+        uploading.upload = nil
+        uploading.uploadSamples = Array(SpeedTest.State.uploadSeries.prefix(8))
+        uploading.phase = .uploading
+        uploading.interrupt(.networkChanged)
+        #expect(uploading.phaseLabel == .interrupted(.networkChanged, average: .download))
+
+        var pinging = SpeedTest.State.pingingFixture
+        pinging.interrupt(.networkChanged)
+        #expect(pinging.phaseLabel == .interrupted(.networkChanged, average: nil))
     }
 
     @Test func locationOffAndICMPBlocked() {
@@ -143,6 +152,18 @@ import Testing
 
         #expect(state.notes == [.locationUnavailable])
         #expect(state.isApproximate)
+    }
+
+    /// The download average stays in its row; under "Connecting…" it would read as the upload's speed.
+    @Test func whileTheUploadConnectsTheBigNumberIsEmpty() {
+        var state = SpeedTest.State.finishedFixture
+        state.upload = nil
+        state.uploadSamples = []
+        state.phase = .connecting(.upload)
+
+        #expect(state.phaseLabel == .connecting)
+        #expect(state.bigNumber == nil)
+        #expect(state.downloadValue?.tag == .average)
     }
 
     @Test func failedShowsTheErrorAndTryAgain() {
@@ -168,10 +189,45 @@ import Testing
         (SpeedTest.State.PhaseLabel.downloading(seconds: 7.25), SpeedTest.State.PhaseLabel.downloading(seconds: 7.4)),
         (.uploading(seconds: 2.5), .uploading(seconds: 7.4)),
         (.stopped(atSeconds: 3), .stopped(atSeconds: 7.4)),
-        (.stopped(atSeconds: nil), .stopped(atSeconds: nil)),
-        (.ready, .ready)
+        (.stopped(atSeconds: nil), .stopped(atSeconds: nil))
     ])
     func aLabelTakesAnotherElapsedTime(label: SpeedTest.State.PhaseLabel, expected: SpeedTest.State.PhaseLabel) {
         #expect(label.withSeconds(7.4) == expected)
+    }
+
+    // MARK: - What VoiceOver announces when a run ends
+
+    @Test func aFinishedRunAnnouncesBothAverages() throws {
+        let state = SpeedTest.State.finishedFixture
+        let download = try #require(state.download)
+        let upload = try #require(state.upload)
+
+        #expect(state.announcement == [
+            String(localized: .accessibilityDownloadAverage(SpeedFormat.mbps(download.averageMbps))),
+            String(localized: .accessibilityUploadAverage(SpeedFormat.mbps(upload.averageMbps)))
+        ].joined(separator: ". "))
+    }
+
+    @Test func anInterruptedRunAnnouncesWhyAndWhatWasMeasured() throws {
+        let state = SpeedTest.State.stoppedFixture
+        let download = try #require(state.download)
+
+        #expect(state.announcement == [
+            String(localized: state.phaseLabel.resource),
+            String(localized: .accessibilityDownloadAverage(SpeedFormat.mbps(download.averageMbps)))
+        ].joined(separator: ". "))
+    }
+
+    @Test func aFailedRunAnnouncesWhatWentWrong() {
+        let state = SpeedTest.State.failedFixture
+
+        #expect(state.announcement == [
+            String(localized: state.phaseLabel.resource),
+            String(localized: SpeedTestError.offline.messageResource)
+        ].joined(separator: ". "))
+    }
+
+    @Test func nothingIsAnnouncedDuringARun() {
+        #expect(SpeedTest.State.downloadingFixture.announcement == nil)
     }
 }

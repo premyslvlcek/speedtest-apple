@@ -20,6 +20,7 @@ public extension TransferService {
             firstByte: { try await session.waitForFirstByte() },
             totalBytes: { session.totalBytes },
             isAlive: { session.isAlive },
+            wasRefused: { session.wasRefused },
             cancel: { session.cancel() }
         )
     })

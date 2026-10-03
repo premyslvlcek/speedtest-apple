@@ -7,27 +7,25 @@
 
 import ComposableArchitecture
 import Foundation
-import SQLiteData
 
-/// Past results, newest first, read live from the database. The speed-test feature writes them; this one lists
-/// and deletes them, and neither knows the other's state.
+/// Past results, newest first, from the shared history file. The speed-test feature adds to it; this one lists
+/// and deletes, and neither knows the other's state.
 @Reducer
 public struct History: Sendable {
     @ObservableState
     public struct State: Equatable {
-        @FetchAll(HistoryEntry.order { $0.date.desc() }, animation: .default)
-        public var entries: [HistoryEntry]
-        @Presents public var confirmation: ConfirmationDialogState<Action.Confirmation>?
+        @Shared(.history) public var entries
+        @Presents public var alert: AlertState<Action.Alert>?
 
         public init() {}
     }
 
     public enum Action: ViewAction {
-        case confirmation(PresentationAction<Confirmation>)
+        case alert(PresentationAction<Alert>)
         case view(View)
 
         @CasePathable
-        public enum Confirmation: Sendable, Equatable {
+        public enum Alert: Sendable, Equatable {
             case clearAll
         }
 
@@ -39,7 +37,6 @@ public struct History: Sendable {
         }
     }
 
-    @Dependency(\.defaultDatabase) var database
     @Dependency(\.dismiss) var dismiss
 
     public init() {}
@@ -47,31 +44,27 @@ public struct History: Sendable {
     public var body: some Reducer<State, Action> {
         Reduce { state, action in
             switch action {
-            case .confirmation(.presented(.clearAll)):
-                return .run { _ in
-                    await withErrorReporting {
-                        try await database.write { db in
-                            try HistoryEntry.delete().execute(db)
-                        }
-                    }
-                }
+            case .alert(.presented(.clearAll)):
+                state.$entries.withLock { $0.removeAll() }
 
-            case .confirmation:
+                return saveNow(state)
+
+            case .alert:
                 return .none
 
             case .view(.clearTapped):
-                state.confirmation = .clearAll
+                state.alert = .clearAll
+
                 return .none
 
             case let .view(.deleteTapped(offsets)):
-                let ids = offsets.map { state.entries[$0].id }
-                return .run { _ in
-                    await withErrorReporting {
-                        try await database.write { db in
-                            try HistoryEntry.find(ids).delete().execute(db)
-                        }
+                state.$entries.withLock { entries in
+                    for offset in offsets.reversed() {
+                        entries.remove(at: offset)
                     }
                 }
+
+                return saveNow(state)
 
             case .view(.doneTapped):
                 return .run { _ in
@@ -79,14 +72,29 @@ public struct History: Sendable {
                 }
             }
         }
-        .ifLet(\.$confirmation, action: \.confirmation)
+        .ifLet(\.$alert, action: \.alert)
+    }
+
+    /// Writes the history now. The file storage delays a change that follows another within a second, and drops it
+    /// if the history is released first: the sheet closing right after a delete.
+    private func saveNow(_ state: State) -> Effect<Action> {
+        .run { [entries = state.$entries] _ in
+            await withErrorReporting {
+                try await entries.save()
+            }
+        }
     }
 }
 
-extension ConfirmationDialogState where Action == History.Action.Confirmation {
-    static let clearAll = ConfirmationDialogState {
+/// An alert, not a confirmation dialog: one irreversible action, laid out full width at any text size, and not
+/// a popover pointing at whatever the dialog was attached to.
+extension AlertState where Action == History.Action.Alert {
+    static let clearAll = AlertState {
         TextState(.historyClearTitle)
     } actions: {
+        ButtonState(role: .cancel) {
+            TextState(.historyCancel)
+        }
         ButtonState(role: .destructive, action: .clearAll) {
             TextState(.historyClearConfirm)
         }

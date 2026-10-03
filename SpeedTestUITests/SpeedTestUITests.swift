@@ -14,23 +14,24 @@ final class SpeedTestUITests: XCTestCase {
         continueAfterFailure = false
     }
 
-    /// A run fills the brief's three fields and shows the address, and the app's database keeps it in the history.
+    /// A run fills the brief's three fields and shows the address, and lands in the history.
     @MainActor
     func testARunFillsTheScreenAndLandsInTheHistory() {
         let app = XCUIApplication()
-        // English, so "Run again" reads the same on every machine; elements are found by identifier.
+        // English, so "Run Again" reads the same on every machine; elements are found by identifier.
         app.launchArguments = ["-scriptedRun", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
         app.launch()
 
         let button = app.buttons["startStopButton"]
         XCTAssertTrue(button.waitForExistence(timeout: 10))
         button.tap()
-        XCTAssertTrue(button.wait(for: \.label, toEqual: "Run again", timeout: 20), "the run never finished")
+        XCTAssertTrue(button.wait(for: \.label, toEqual: "Run Again", timeout: 20), "the run never finished")
 
         let server = app.staticTexts["serverField"].label
         XCTAssertFalse(server.contains("—") || server.contains("choosing"), "no server: \(server)")
-        XCTAssertTrue(app.staticTexts["pingField"].label.contains(" ms"))
-        XCTAssertTrue(app.staticTexts["downloadField"].label.contains("Mbps"))
+        XCTAssertTrue(app.staticTexts["pingField"].label.contains("ms"))
+        // The row's accessibility label: the speed as VoiceOver says it.
+        XCTAssertTrue(app.staticTexts["downloadField"].label.contains("megabits per second"))
         // The scripted directory's documentation address: proves the launch ran on the scripted clients.
         XCTAssertTrue(app.staticTexts["ipField"].label.contains("203.0.113.7"))
 

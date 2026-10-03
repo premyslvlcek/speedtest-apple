@@ -15,21 +15,15 @@ import Foundation
 ///
 ///     offset  0     1     2–3        4–5          6–7        8…
 ///             type  code  checksum   identifier   sequence   payload
-public struct EchoMessage: Sendable, Equatable {
-    public var identifier: UInt16
-    public var sequence: UInt16
-    public var payload: Data
-
-    public init(identifier: UInt16, sequence: UInt16, payload: Data) {
-        self.identifier = identifier
-        self.sequence = sequence
-        self.payload = payload
-    }
+struct EchoMessage: Sendable, Equatable {
+    var identifier: UInt16
+    var sequence: UInt16
+    var payload: Data
 }
 
 // MARK: - Encoding
 
-public extension EchoMessage {
+extension EchoMessage {
     /// The bytes to send as an echo request.
     /// IPv4: type 8 with the RFC 1071 checksum. IPv6: type 128, checksum 0 (the kernel fills it in).
     func requestData(family: AddressFamily) -> Data {
@@ -38,13 +32,8 @@ public extension EchoMessage {
 }
 
 extension EchoMessage {
-    /// The bytes of an echo reply carrying this message, without an IP header (the way an ICMPv6 socket
-    /// delivers it). Only tests need it, to play the remote host.
-    func replyData(family: AddressFamily) -> Data {
-        encoded(type: family == .ipv4 ? MessageType.echoReplyV4 : MessageType.echoReplyV6, family: family)
-    }
-
-    private func encoded(type: UInt8, family: AddressFamily) -> Data {
+    /// The message as bytes, with the given type byte. Tests also use it to build replies.
+    func encoded(type: UInt8, family: AddressFamily) -> Data {
         var bytes: [UInt8] = []
         bytes.append(type)
         bytes.append(0) // code
@@ -63,7 +52,7 @@ extension EchoMessage {
 
 // MARK: - Decoding
 
-public extension EchoMessage {
+extension EchoMessage {
     /// Parses an echo reply, or returns nil if `data` isn't one.
     /// IPv4: strips the IP header by its header-length nibble, accepts type 0 only.
     /// IPv6: no header, accepts type 129 only (which also skips our own type-128 request on `::1`).
@@ -93,17 +82,9 @@ public extension EchoMessage {
 }
 
 extension EchoMessage {
-    /// Parses an echo request as it goes out: no IP header, type 8 (IPv4) or 128 (IPv6). Only tests need
-    /// it, to read what a pinger sent when they play the remote host.
-    init?(requestData data: Data, family: AddressFamily) {
-        self.init(
-            icmp: [UInt8](data),
-            type: family == .ipv4 ? MessageType.echoRequestV4 : MessageType.echoRequestV6
-        )
-    }
-
-    /// Reads the fields of an ICMP echo message that starts at the first byte, if it has the given type.
-    private init?(icmp: [UInt8], type: UInt8) {
+    /// Reads the fields of an ICMP echo message that starts at the first byte, if it has the given type. Tests also
+    /// use it to read requests.
+    init?(icmp: [UInt8], type: UInt8) {
         guard icmp.count >= Field.payload,
               icmp[Field.type] == type,
               icmp[Field.code] == 0

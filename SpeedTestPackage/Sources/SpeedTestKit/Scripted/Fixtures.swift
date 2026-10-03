@@ -117,13 +117,9 @@ private extension Fixtures {
         return Server(
             url: url,
             host: host,
-            port: port,
             coordinate: Coordinate(latitude: latitude, longitude: longitude),
             provider: provider,
-            city: city,
-            country: "Czechia",
-            countryCode: "CZ",
-            speedMbps: 1000
+            city: city
         )
     }
 }

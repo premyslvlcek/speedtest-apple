@@ -15,10 +15,20 @@ public extension ServerDirectory {
         return url
     }()
 
+    /// Its own session: ephemeral, with no cache and no cookies, so neither the coordinates in the server-list URL
+    /// nor the address the IP lookup returns is kept on disk.
+    static let directorySession: URLSession = {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.urlCache = nil
+        configuration.httpCookieStorage = nil
+        configuration.httpShouldSetCookies = false
+        return URLSession(configuration: configuration)
+    }()
+
     /// The directory over HTTPS. `timeout` is each request's `timeoutInterval`; pass the run's
     /// `SpeedTestConfiguration.directoryTimeout`.
     static func live(
-        session: URLSession = .shared,
+        session: URLSession = ServerDirectory.directorySession,
         baseURL: URL = ServerDirectory.productionURL,
         timeout: Duration
     ) -> ServerDirectory {
@@ -55,13 +65,13 @@ struct DirectoryHTTPClient: Sendable {
 
         let data = try await send(request)
         let dto = try decoded { try JSONDecoder().decode(TokenDTO.self, from: data) }
-        return dto.toDomainModel()
+        return TransferToken(dto: dto)
     }
 
     func clientIP() async throws -> ClientIP {
         let data = try await send(request(baseURL.appending(path: "api/v1/ip"), method: "GET"))
         let dto = try decoded { try JSONDecoder().decode(ClientIPDTO.self, from: data) }
-        return dto.toDomainModel()
+        return ClientIP(dto: dto)
     }
 
     /// Every directory request: JSON, this client's timeout, and no local cache.
@@ -84,7 +94,7 @@ struct DirectoryHTTPClient: Sendable {
             guard let http = response as? HTTPURLResponse else {
                 throw URLError(.badServerResponse)
             }
-            guard Self.successStatusCodes.contains(http.statusCode) else {
+            guard HTTPStatusError.successCodes.contains(http.statusCode) else {
                 throw HTTPStatusError(statusCode: http.statusCode)
             }
             return data
@@ -95,9 +105,6 @@ struct DirectoryHTTPClient: Sendable {
             throw mapped
         }
     }
-
-    /// HTTP's 2xx range: the request succeeded.
-    private static let successStatusCodes = 200 ..< 300
 
     /// A coordinate with a fixed number of decimals, never in scientific notation. Two decimals is about 1 km, the
     /// accuracy the locator asks for: enough for choosing servers, and no more of the device's position than that.

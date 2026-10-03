@@ -6,6 +6,7 @@
 //
 
 import Dependencies
+import ICMP
 import os
 
 public extension TransferMeter {
@@ -59,7 +60,8 @@ struct TransferMeasurement: Sendable {
                 try await measure(on: server, direction, token: token) { continuation.yield($0) }
                 continuation.finish()
             } catch {
-                continuation.finish(throwing: Task.isCancelled ? nil : Self.mapping(error))
+                // Only our own cancellation ends quietly; a cancellation from under the meter is a failure.
+                continuation.finish(throwing: Task.isCancelled ? nil : Self.mapping(error) ?? .transferFailed)
             }
         }
         continuation.onTermination = { _ in
@@ -89,14 +91,23 @@ struct TransferMeasurement: Sendable {
         defer { handle.cancel() }
 
         try await waitForFirstByte(handle)
-        let duration = switch direction {
+        let (duration, averageFrom) = switch direction {
         case .download:
-            configuration.downloadDuration
+            (configuration.downloadDuration, Duration.zero)
 
         case .upload:
-            configuration.uploadDuration
+            // Upload bytes count when handed to the network stack, which takes up to 2 MiB per connection ahead of
+            // the line. The head start stays about the same all along, so leaving the first second out (no samples,
+            // and an average from its end) cancels it.
+            (configuration.uploadDuration, configuration.uploadWarmUp)
         }
-        try await sample(handle, for: duration, onSample: onSample)
+        do {
+            try await sample(handle, for: duration, averageFrom: averageFrom, onSample: onSample)
+        } catch SpeedTestError.connectionLost where direction == .upload && handle.wasRefused() {
+            // Upload bytes count as they're sent, so a server that refuses the upload does so after the first
+            // byte. That's an upload that couldn't run, not a lost connection: the run still finishes.
+            throw SpeedTestError.transferFailed
+        }
     }
 
     /// Samples from t0 while watching the network. The watch starts here, at the first byte, so only a change
@@ -104,9 +115,13 @@ struct TransferMeasurement: Sendable {
     private func sample(
         _ handle: TransferHandle,
         for duration: Duration,
+        averageFrom: Duration,
         onSample: @escaping @Sendable (ThroughputSample) -> Void
     ) async throws {
         let stopwatch = Stopwatch(clock: clock)
+        // Bytes start where time starts: whatever was counted before (the first chunk, and anything that arrived
+        // while the meter got going) isn't measured.
+        let bytesAtStart = handle.totalBytes()
         let changes = network.interfaceChanges()
 
         try await withThrowingTaskGroup(of: Bool.self) { group in
@@ -118,7 +133,14 @@ struct TransferMeasurement: Sendable {
                 return false
             }
             group.addTask {
-                try await tick(handle, stopwatch: stopwatch, for: duration, onSample: onSample)
+                try await tick(
+                    handle,
+                    stopwatch: stopwatch,
+                    bytesAtStart: bytesAtStart,
+                    for: duration,
+                    averageFrom: averageFrom,
+                    onSample: onSample
+                )
                 return true
             }
 
@@ -140,24 +162,26 @@ struct TransferMeasurement: Sendable {
     private func waitForFirstByte(_ handle: TransferHandle) async throws {
         let clock = self.clock
         let stallTimeout = configuration.stallTimeout
-        let timedOut = OSAllocatedUnfairLock(initialState: false)
+        let outcome = OSAllocatedUnfairLock(initialState: FirstByteOutcome.waiting)
 
         try await withThrowingTaskGroup(of: Void.self) { group in
             group.addTask {
                 try await clock.sleep(for: stallTimeout)
-                try Task.checkCancellation()
-                timedOut.withLock { $0 = true }
-                handle.cancel()
+                // Only one side decides: the timeout cancels the connections only if the first byte hasn't
+                // claimed the outcome already, and once it has claimed it, a late first byte is a stall.
+                if outcome.withLock({ $0.claim(.timedOut) }) {
+                    handle.cancel()
+                }
             }
             defer { group.cancelAll() }
 
             do {
                 try await handle.firstByte()
             } catch {
-                let cancelledByTimeout = timedOut.withLock { $0 } && SpeedTestError.mapping(error) == nil
+                let cancelledByTimeout = outcome.withLock { $0 } == .timedOut && SpeedTestError.mapping(error) == nil
                 throw cancelledByTimeout ? TransferStartFailure.stalled : TransferStartFailure.failed(error)
             }
-            if timedOut.withLock({ $0 }), !handle.isAlive() {
+            guard outcome.withLock({ $0.claim(.firstByte) }) else {
                 throw TransferStartFailure.stalled
             }
         }
@@ -166,10 +190,12 @@ struct TransferMeasurement: Sendable {
     private func tick(
         _ handle: TransferHandle,
         stopwatch: Stopwatch,
+        bytesAtStart: Int64,
         for duration: Duration,
+        averageFrom: Duration,
         onSample: @Sendable (ThroughputSample) -> Void
     ) async throws {
-        var sampler = ThroughputSampler(window: configuration.speedWindow)
+        var sampler = ThroughputSampler(window: configuration.speedWindow, averageFrom: averageFrom)
         var schedule = SampleSchedule(interval: configuration.sampleInterval, duration: duration)
 
         while true {
@@ -180,8 +206,17 @@ struct TransferMeasurement: Sendable {
             try Task.checkCancellation()
             guard handle.isAlive() else { throw SpeedTestError.connectionLost }
 
-            let wakeUp = schedule.wake(at: stopwatch.elapsed())
-            onSample(sampler.add(elapsed: wakeUp.elapsed, totalBytes: handle.totalBytes()))
+            let elapsed = stopwatch.elapsed()
+            let wakeUp = schedule.wake(at: elapsed)
+            // The speeds use the time the bytes were actually read at; a late last wake-up still shows as the
+            // duration, but doesn't count the extra bytes over the shorter time.
+            var sample = sampler.add(elapsed: elapsed, totalBytes: handle.totalBytes() - bytesAtStart)
+            sample.elapsed = wakeUp.elapsed
+            // During a warm-up the readings are taken, so the window and the average can start after it, but not
+            // shown: they'd show the head start as speed.
+            if wakeUp.elapsed > averageFrom {
+                onSample(sample)
+            }
             if wakeUp.isLast {
                 return
             }
@@ -211,5 +246,22 @@ struct SampleSchedule {
         let reported = min(elapsed, duration)
         tick = Int((reported / interval).rounded(.down)) + 1
         return (reported, reported >= duration)
+    }
+}
+
+/// Which came first while waiting for the first byte. Moved out of `waiting` once, under a lock.
+enum FirstByteOutcome: Equatable, Sendable {
+    case waiting
+    case firstByte
+    case timedOut
+
+    /// Takes the outcome if nothing has yet. Returns whether this call decided it.
+    mutating func claim(_ claimed: Self) -> Bool {
+        guard self == .waiting else {
+            return false
+        }
+
+        self = claimed
+        return true
     }
 }

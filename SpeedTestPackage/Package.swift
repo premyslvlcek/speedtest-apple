@@ -11,7 +11,6 @@ let composableArchitecture = Target.Dependency.product(
     name: "ComposableArchitecture",
     package: "swift-composable-architecture"
 )
-let sqliteData = Target.Dependency.product(name: "SQLiteData", package: "sqlite-data")
 let dependencies = Target.Dependency.product(name: "Dependencies", package: "swift-dependencies")
 let dependenciesMacros = Target.Dependency.product(name: "DependenciesMacros", package: "swift-dependencies")
 let dependenciesTestSupport = Target.Dependency.product(
@@ -20,7 +19,6 @@ let dependenciesTestSupport = Target.Dependency.product(
 )
 let clocks = Target.Dependency.product(name: "Clocks", package: "swift-clocks")
 let concurrencyExtras = Target.Dependency.product(name: "ConcurrencyExtras", package: "swift-concurrency-extras")
-let snapshotTesting = Target.Dependency.product(name: "SnapshotTesting", package: "swift-snapshot-testing")
 
 let package = Package(
     name: "SpeedTestPackage",
@@ -40,8 +38,6 @@ let package = Package(
             traits: ["ComposableArchitecture2Deprecations"]
         ),
         .package(url: "https://github.com/pointfreeco/swift-dependencies", from: "1.17.1"),
-        .package(url: "https://github.com/pointfreeco/sqlite-data", from: "1.12.0"),
-        .package(url: "https://github.com/pointfreeco/swift-snapshot-testing", from: "1.19.6"),
         .package(url: "https://github.com/pointfreeco/swift-clocks", from: "1.1.1"),
         .package(url: "https://github.com/pointfreeco/swift-concurrency-extras", from: "1.4.1")
     ],
@@ -62,7 +58,7 @@ let package = Package(
         ),
         .target(
             name: "HistoryFeature",
-            dependencies: ["DesignSystem", composableArchitecture, sqliteData, dependencies, dependenciesMacros],
+            dependencies: ["DesignSystem", composableArchitecture, dependencies, dependenciesMacros],
             resources: [.process("Resources")],
             swiftSettings: swiftSettings
         ),
@@ -102,7 +98,7 @@ let package = Package(
         ),
         .testTarget(
             name: "HistoryFeatureTests",
-            dependencies: ["HistoryFeature", "TestSupport", composableArchitecture, sqliteData, dependenciesTestSupport],
+            dependencies: ["HistoryFeature", "TestSupport", composableArchitecture, dependenciesTestSupport],
             swiftSettings: swiftSettings
         ),
         .testTarget(
@@ -115,7 +111,6 @@ let package = Package(
                 "TestSupport",
                 composableArchitecture,
                 dependenciesTestSupport,
-                snapshotTesting,
                 clocks
             ],
             swiftSettings: swiftSettings

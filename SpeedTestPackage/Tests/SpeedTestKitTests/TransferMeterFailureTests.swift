@@ -15,18 +15,18 @@ import TestSupport
 @Suite(.mainSerialExecutor, .timeLimit(.minutes(1))) struct TransferMeterFailureTests {
     // MARK: - Before the first byte
 
-    /// Which errors count as a failed start is the error mapping's rule (ErrorMappingTests); here, one of them.
-    @Test func aFailedStartIsATransferFailure() async {
-        let transfers = FakeTransferService([FakeTransfer(firstByte: .fails(HTTPStatusError(statusCode: 429)))])
+    /// A cancellation the meter didn't ask for (the session cancelled under it) is a failure, not a quiet end: a
+    /// quiet end would look like a finished transfer with no samples and skip the failover.
+    @Test func aCancellationNobodyAskedForIsATransferFailure() async {
+        let transfers = FakeTransferService([FakeTransfer(firstByte: .fails(URLError(.cancelled)))])
         let meter = makeMeter(transfer: transfers.service)
 
         let measurement = await meter.measure(MeterFixtures.server, .download, MeterFixtures.token).collect()
 
         #expect(measurement.speedTestError == .transferFailed)
-        #expect(measurement.samples.isEmpty)
     }
 
-    @Test func nothingForThreeSecondsIsATransferFailure() async {
+    @Test func noFirstByteBeforeTheStallTimeoutIsATransferFailure() async {
         let transfers = FakeTransferService([FakeTransfer(firstByte: .never)])
         let meter = makeMeter(transfer: transfers.service)
 
@@ -35,8 +35,12 @@ import TestSupport
         #expect(measurement.speedTestError == .transferFailed)
     }
 
-    @Test func anOfflineDeviceIsOffline() async {
-        let transfers = FakeTransferService([FakeTransfer(firstByte: .fails(URLError(.notConnectedToInternet)))])
+    /// The timeout fires and cancels the connections just as a real error arrives: the error wins, so an offline
+    /// device still reads as offline, not as a stalled server.
+    @Test func aRealErrorBeatsTheTimeoutItCoincidesWith() async {
+        let transfers = FakeTransferService([
+            FakeTransfer(firstByte: .whenCancelled(.failure(URLError(.notConnectedToInternet))))
+        ])
         let meter = makeMeter(transfer: transfers.service)
 
         let measurement = await meter.measure(MeterFixtures.server, .download, MeterFixtures.token).collect()
@@ -44,16 +48,59 @@ import TestSupport
         #expect(measurement.speedTestError == .offline)
     }
 
+    /// A first byte that lands just as the timeout has cancelled every connection doesn't count: there is nothing
+    /// left to measure.
+    @Test func aByteAfterTheTimeoutCancelledTheConnectionsIsAStall() async {
+        let transfers = FakeTransferService([FakeTransfer(firstByte: .whenCancelled(.success(())))])
+        let meter = makeMeter(transfer: transfers.service)
+
+        let measurement = await meter.measure(MeterFixtures.server, .download, MeterFixtures.token).collect()
+
+        #expect(measurement.speedTestError == .transferFailed)
+        #expect(measurement.samples.isEmpty)
+    }
+
+    @Test func anOfflineDeviceIsOffline() async {
+        let transfers = FakeTransferService([FakeTransfer(firstByte: .fails(URLError(.notConnectedToInternet)))])
+        let meter = makeMeter(transfer: transfers.service)
+
+        let measurement = await meter.measure(MeterFixtures.server, .download, MeterFixtures.token).collect()
+
+        // Mapped by the connection's error, not by the meter's wrapper around it (that would be `.transferFailed`).
+        #expect(measurement.speedTestError == .offline)
+        #expect(measurement.samples.isEmpty)
+    }
+
     // MARK: - After the first byte
 
     @Test func whenEveryConnectionHasFailedTheTransferIsLost() async {
-        let transfers = FakeTransferService([FakeTransfer(aliveForReads: 8)])
+        // One read when the clock starts, then eight samples.
+        let transfers = FakeTransferService([FakeTransfer(aliveForReads: 9)])
         let meter = makeMeter(transfer: transfers.service)
 
         let measurement = await meter.measure(MeterFixtures.server, .download, MeterFixtures.token).collect()
 
         #expect(measurement.speedTestError == .connectionLost)
         #expect(measurement.samples.count == 8)
+    }
+
+    /// Upload bytes count as they're sent, so a server that refuses the upload (401, 413, 5xx) does so after the
+    /// first byte. That's a failed upload, not a lost connection: the run still finishes. A download that loses its
+    /// connections the same way stays a lost connection.
+    @Test(arguments: [
+        (TransferDirection.upload, SpeedTestError.transferFailed),
+        (.download, .connectionLost)
+    ])
+    func aServerThatRefusesEveryConnectionAfterTheFirstByte(
+        direction: TransferDirection,
+        expected: SpeedTestError
+    ) async {
+        let transfers = FakeTransferService([FakeTransfer(aliveForReads: 3, endsRefused: true)])
+        let meter = makeMeter(transfer: transfers.service)
+
+        let measurement = await meter.measure(MeterFixtures.server, direction, MeterFixtures.token).collect()
+
+        #expect(measurement.speedTestError == expected)
     }
 
     /// The `TestClock` never advances, so after the first byte the meter sleeps towards its first tick. The

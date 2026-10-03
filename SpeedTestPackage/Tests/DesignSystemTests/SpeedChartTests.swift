@@ -25,12 +25,12 @@ import Testing
         #expect(SpeedChart.upperBound(points: points, average: 300) == 400)
     }
 
-    /// Round numbers in every decade, so a slow line gets as fitting an axis as a fast one.
-    @Test(arguments: [(7.0, 8.0), (115.0, 150.0), (1300.0, 1500.0)])
-    func upperBoundRoundsWithinItsDecade(highest: Double, expected: Double) {
-        let points = [ChartPoint(seconds: 0.25, mbps: highest / 1.15)]
+    /// A value that lands exactly on a round step stays there, even when the headroom arithmetic leaves it a
+    /// rounding error above: 1500 / 1.15 × 1.15 is 1500.0000000000002, which must give 1500, not 2000.
+    @Test func aValueOnARoundStepStaysOnIt() {
+        let points = [ChartPoint(seconds: 0.25, mbps: 1500 / 1.15)]
 
-        #expect(SpeedChart.upperBound(points: points, average: nil) == expected)
+        #expect(SpeedChart.upperBound(points: points, average: nil) == 1500)
     }
 
     /// An empty or all-zero series still needs a range: a 0…0 scale can't be drawn.
@@ -45,5 +45,19 @@ import Testing
         let drawn = SpeedChart.drawnPoints(points, head: ChartPoint(seconds: 0.4, mbps: 160))
 
         #expect(drawn == [ChartPoint(seconds: 0.25, mbps: 100), ChartPoint(seconds: 0.4, mbps: 160)])
+    }
+
+    /// When a sample arrives, the head starts where the previous point is. Two points at the same time make the
+    /// smoothed curve overshoot far above the plot, so the point the head is leaving isn't drawn twice.
+    @Test func thePointTheHeadIsLeavingIsNotDrawnTwice() {
+        let points = [
+            ChartPoint(seconds: 0.25, mbps: 100),
+            ChartPoint(seconds: 0.5, mbps: 200),
+            ChartPoint(seconds: 0.75, mbps: 260)
+        ]
+
+        let drawn = SpeedChart.drawnPoints(points, head: ChartPoint(seconds: 0.5, mbps: 200))
+
+        #expect(drawn == [ChartPoint(seconds: 0.25, mbps: 100), ChartPoint(seconds: 0.5, mbps: 200)])
     }
 }

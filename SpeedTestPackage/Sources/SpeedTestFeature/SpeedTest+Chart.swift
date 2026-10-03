@@ -18,7 +18,7 @@ extension SpeedTest.State {
 
     /// The running phase's live samples; once the run ends, the download with its average.
     var chartSeries: ChartSeries? {
-        let configuration = SpeedTestConfiguration.standard
+        let configuration = SpeedTest.configuration
 
         switch phase {
         case .connecting(.download), .downloading:

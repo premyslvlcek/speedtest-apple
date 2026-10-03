@@ -12,42 +12,31 @@ public struct Server: Sendable, Hashable, Identifiable {
     /// `https://<name>.wifiman.me:<port>`. Unique per entry; the same host can appear on two ports.
     public let url: URL
     public let host: String
-    public let port: Int
     public let coordinate: Coordinate
     public let provider: String
     public let city: String
-    public let country: String
-    public let countryCode: String
-    public let speedMbps: Int
 
     public var id: URL {
         url
     }
 
-    /// The directory has no name field, so the app shows "provider · city".
+    /// The directory has no name field, so the app shows "provider · city". The space before "·" doesn't break, so
+    /// a wrapped name never starts a line with the separator.
     public var name: String {
-        "\(provider) · \(city)"
+        "\(provider)\u{00A0}· \(city)"
     }
 
     public init(
         url: URL,
         host: String,
-        port: Int,
         coordinate: Coordinate,
         provider: String,
-        city: String,
-        country: String,
-        countryCode: String,
-        speedMbps: Int
+        city: String
     ) {
         self.url = url
         self.host = host
-        self.port = port
         self.coordinate = coordinate
         self.provider = provider
         self.city = city
-        self.country = country
-        self.countryCode = countryCode
-        self.speedMbps = speedMbps
     }
 }

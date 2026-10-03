@@ -57,11 +57,8 @@ extension SpeedTest {
 
         state.candidates = IdentifiedArray(uniqueElements: candidates)
         state.phase = .pinging
-        let hosts = candidates.map(\.server.host).reduce(into: [String]()) { hosts, host in
-            if !hosts.contains(host) {
-                hosts.append(host)
-            }
-        }
+        var seen = Set<String>()
+        let hosts = candidates.map(\.server.host).filter { seen.insert($0).inserted }
         let configuration = Self.configuration.ping
 
         return .run { send in
@@ -103,9 +100,11 @@ extension SpeedTest {
         .cancellable(id: SpeedTestId())
     }
 
-    /// Measures the download on the selected server with the run's token.
-    func measureDownload(state: State) -> Effect<Action> {
+    func measureDownload(state: inout State) -> Effect<Action> {
         guard let server = state.selection?.server, let token = state.token else {
+            // Can't happen: a server is chosen and the token fetched before this. Fail rather than wait forever.
+            state.phase = .failed(.transferFailed)
+
             return .none
         }
 
@@ -124,6 +123,7 @@ extension SpeedTest {
         state.download = TransferResult(lastSample: last, wasPartial: false)
         guard state.measuresUpload else {
             state.phase = .finished
+
             return saveIfFinished(state: state)
         }
 
@@ -150,7 +150,7 @@ extension SpeedTest {
         state.select(target, reason: .failover)
         state.hasFailedOver = true
 
-        return measureDownload(state: state)
+        return measureDownload(state: &state)
     }
 
     /// A finished run goes into the history. A stopped, interrupted or failed one doesn't.
@@ -159,9 +159,7 @@ extension SpeedTest {
             return .none
         }
         return .run { _ in
-            await withErrorReporting {
-                try await historyClient.save(entry)
-            }
+            historyClient.save(entry)
         }
     }
 
