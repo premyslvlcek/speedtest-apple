@@ -32,13 +32,9 @@ extension Server {
         return Server(
             url: url,
             host: host,
-            port: port,
             coordinate: Coordinate(latitude: latitude, longitude: longitude),
             provider: provider ?? name,
-            city: city,
-            country: "Czechia",
-            countryCode: "CZ",
-            speedMbps: 1000
+            city: city
         )
     }
 }

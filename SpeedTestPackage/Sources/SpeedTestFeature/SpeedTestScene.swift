@@ -22,13 +22,9 @@ public struct SpeedTestScene: Scene {
     /// once per launch and before anything reads them, and nothing reads them before the store exists.
     @MainActor private static func makeStore() -> StoreOf<SpeedTest> {
         prepareDependencies {
-            do {
-                try $0.prepareHistory(inMemory: LaunchOptions.isScriptedRun)
-            } catch {
-                reportIssue(error)
-            }
             if LaunchOptions.isScriptedRun {
-                // A run of a few seconds with no network, location or ICMP.
+                // A run of a few seconds with no network, location or ICMP, and a history that isn't saved.
+                $0.defaultFileStorage = .inMemory
                 $0.locator = .scripted
                 $0.serverDirectory = .scripted
                 $0.pingService = .scripted

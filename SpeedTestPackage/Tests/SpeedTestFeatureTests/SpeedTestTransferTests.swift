@@ -12,7 +12,7 @@ import SpeedTestKit
 import Testing
 import TestSupport
 
-@testable import HistoryFeature
+import HistoryFeature
 @testable import SpeedTestFeature
 
 /// From the token to the end of the run: download, upload, failover and interruptions. Each test starts with the
@@ -33,7 +33,7 @@ import TestSupport
         state.clientIP = Fixtures.clientIP
         let server = try #require(state.selection?.server)
         let history = RunFakes.History()
-        let store = try Self.store(state, meter, history: history)
+        let store = Self.store(state, meter, history: history)
 
         await store.send(.tokenResponse(.success(token))) {
             $0.token = token
@@ -63,7 +63,7 @@ import TestSupport
             Start(server: server.id, direction: .upload, token: token.value)
         ])
         #expect(await history.saved(store) == [
-            HistoryEntry.Draft(
+            HistoryEntry(
                 recordedAt: Self.now,
                 serverProvider: server.provider,
                 serverCity: server.city,
@@ -103,7 +103,7 @@ import TestSupport
         let meter = RunFakes.Meter([.samples([], then: .transferFailed), .samples([download1]), .samples([upload1])])
         let state = try Self.serverChosen()
         let target = try #require(ServerSelector.failoverTarget(after: state.order[0], in: state.order))
-        let store = try Self.store(state, meter)
+        let store = Self.store(state, meter)
 
         await store.send(.tokenResponse(.success(token))) {
             $0.token = token
@@ -139,7 +139,7 @@ import TestSupport
         let another = try #require(Fixtures.candidates.first { $0.server.provider == "Ubiquiti" })
         state.candidates.append(another)
         state.order.append(another)
-        let store = try Self.store(state, meter)
+        let store = Self.store(state, meter)
         store.exhaustivity = .off(showSkippedAssertions: false)
 
         await store.send(.tokenResponse(.success(token)))
@@ -291,8 +291,8 @@ import TestSupport
     private static func serverChosen(measuresUpload: Bool = true) throws -> SpeedTest.State {
         let candidates = Fixtures.candidates
         let order = try [
-            #require(candidates.first { $0.server.provider == "Elektro Solution" && $0.server.port == 81 }),
-            #require(candidates.first { $0.server.provider == "Elektro Solution" && $0.server.port == 88 }),
+            #require(candidates.first { $0.server.provider == "Elektro Solution" && $0.server.url.port == 81 }),
+            #require(candidates.first { $0.server.provider == "Elektro Solution" && $0.server.url.port == 88 }),
             #require(candidates.first { $0.server.provider == "jablonka.cz" })
         ]
         var state = SpeedTest.State()
@@ -313,7 +313,7 @@ import TestSupport
         _ meter: RunFakes.Meter,
         history: RunFakes.History = RunFakes.History(),
         dependencies: (inout DependencyValues) -> Void = { _ in }
-    ) throws -> TestStoreOf<SpeedTest> {
+    ) -> TestStoreOf<SpeedTest> {
         TestStore(initialState: state) {
             SpeedTest()
         } withDependencies: {

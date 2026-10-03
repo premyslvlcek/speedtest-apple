@@ -31,31 +31,17 @@ struct MeasurementPanel: View {
                 ResultRow(
                     title: Text(.fieldServer),
                     value: store.serverString,
+                    isPlaceholder: store.serverValue == .choosing,
                     accessibilityIdentifier: "serverField"
                 )
                 Divider()
                 ResultRow(
                     title: Text(.fieldPing),
                     value: store.pingString,
+                    spokenValue: store.spokenPing,
                     accessibilityIdentifier: "pingField"
                 )
-                Divider()
-                ResultRow(
-                    title: Text(.fieldDownload),
-                    value: store.downloadString,
-                    tag: store.downloadTag,
-                    accessibilityIdentifier: "downloadField"
-                )
-                if store.measuresUpload {
-                    Divider()
-                    ResultRow(
-                        title: Text(.fieldUpload),
-                        value: store.uploadString,
-                        tag: store.uploadTag,
-                        isSecondary: true,
-                        accessibilityIdentifier: "uploadField"
-                    )
-                }
+                SpeedRows(store: store)
             }
 
             if let clientIP = store.clientIP {
@@ -82,21 +68,105 @@ struct MeasurementPanel: View {
     }
 }
 
+/// The Download row, and the Upload row when upload is measured. Its own view, so a new sample redraws these rows,
+/// not the whole panel. Each counts with the big number, so the two never disagree once a count ends.
+private struct SpeedRows: View {
+    let store: StoreOf<SpeedTest>
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        Divider()
+        downloadRow
+        if store.measuresUpload {
+            Divider()
+            uploadRow
+        }
+    }
+
+    @ViewBuilder
+    private var downloadRow: some View {
+        if let value = store.downloadValue {
+            ResultRow(
+                title: Text(.fieldDownload),
+                number: value.mbps,
+                format: SpeedTest.State.speedString(mbps:),
+                spokenFormat: Self.spoken,
+                tag: store.downloadTag,
+                accessibilityIdentifier: "downloadField"
+            )
+            .animation(.counting(reduceMotion: reduceMotion), value: value.mbps)
+        } else {
+            ResultRow(
+                title: Text(.fieldDownload),
+                value: store.downloadString,
+                accessibilityIdentifier: "downloadField"
+            )
+        }
+    }
+
+    @ViewBuilder
+    private var uploadRow: some View {
+        if case let .speed(value) = store.uploadValue {
+            ResultRow(
+                title: Text(.fieldUpload),
+                number: value.mbps,
+                format: SpeedTest.State.speedString(mbps:),
+                spokenFormat: Self.spoken,
+                tag: store.uploadTag,
+                isSecondary: true,
+                accessibilityIdentifier: "uploadField"
+            )
+            .animation(.counting(reduceMotion: reduceMotion), value: value.mbps)
+        } else {
+            ResultRow(
+                title: Text(.fieldUpload),
+                value: store.uploadString,
+                isSecondary: true,
+                accessibilityIdentifier: "uploadField"
+            )
+        }
+    }
+
+    /// "451 megabits per second", as the big number and the announcements say it.
+    private static func spoken(_ mbps: Double) -> String {
+        String(localized: .accessibilityMegabitsPerSecond(SpeedFormat.mbps(mbps)))
+    }
+}
+
+private extension Animation {
+    /// Counts to each sample over one sample interval, so the numbers are always moving, never jumping.
+    static func counting(reduceMotion: Bool) -> Animation? {
+        reduceMotion ? nil : .linear(duration: SpeedTest.configuration.sampleInterval.inSeconds)
+    }
+}
+
 /// The phase label and the big number. Its own view, so a new sample redraws only this, not the whole panel.
 private struct BigNumber: View {
     let store: StoreOf<SpeedTest>
 
     @ScaledMetric(relativeTo: .largeTitle) private var size: CGFloat = 64
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         VStack(spacing: 2) {
-            phaseLabel
-                .font(.footnote.weight(.semibold))
-                .textCase(.uppercase)
-                .foregroundStyle(Palette.secondaryText)
-                .multilineTextAlignment(.center)
-                .accessibilityIdentifier("phaseLabel")
+            ZStack(alignment: .top) {
+                // At accessibility sizes a label can take two lines; keeping room for two stops the screen from
+                // moving when the phase changes.
+                if dynamicTypeSize.isAccessibilitySize {
+                    Text(verbatim: "\u{00A0}\n\u{00A0}")
+                        .hidden()
+                }
+                phaseLabel
+            }
+            .font(.footnote.weight(.semibold))
+            .foregroundStyle(store.phaseLabel.isWarning ? Palette.warning : Palette.secondaryText)
+            .multilineTextAlignment(.center)
+            // Wraps at large text sizes instead of truncating.
+            .fixedSize(horizontal: false, vertical: true)
+            // VoiceOver reads it once, as the big number's label.
+            .accessibilityHidden(true)
 
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 number
@@ -106,9 +176,14 @@ private struct BigNumber: View {
                     .minimumScaleFactor(0.5)
                     .animation(counting, value: store.bigNumber)
 
-                Text(.unitMbps)
-                    .font(.headline)
-                    .foregroundStyle(Palette.secondaryText)
+                // No unit without a number, so the dash sits in the middle.
+                if store.bigNumber != nil {
+                    Text(.unitMbps)
+                        .font(.headline)
+                        .foregroundStyle(Palette.secondaryText)
+                        // At the largest sizes the unit would grow as big as the shrinking number.
+                        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+                }
             }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(store.phaseLabel.text)
@@ -118,9 +193,8 @@ private struct BigNumber: View {
         }
     }
 
-    /// Counts to each sample over one sample interval, so the numbers are always moving, never jumping.
     private var counting: Animation? {
-        reduceMotion ? nil : .linear(duration: Self.interval)
+        .counting(reduceMotion: reduceMotion)
     }
 
     /// The elapsed time in the label counts too: 0.3, 0.4, 0.5 s instead of 0.3, 0.5, 0.8.
@@ -141,6 +215,9 @@ private struct BigNumber: View {
             AnimatedNumber(value) { Text(verbatim: SpeedFormat.mbps($0)) }
         } else {
             Text(verbatim: SpeedFormat.placeholder)
+                // Light, so the dash doesn't read as a solid bar at this size.
+                .fontWeight(.light)
+                .foregroundStyle(Palette.secondaryText)
         }
     }
 
@@ -152,12 +229,10 @@ private struct BigNumber: View {
 
         return Text(.accessibilityMegabitsPerSecond(SpeedFormat.mbps(value)))
     }
-
-    private static let interval = SpeedTest.configuration.sampleInterval.inSeconds
 }
 
-/// The live graph under the big number. Its own view, so a new point redraws only the chart; before the first
-/// transfer of a run an empty space of the same height keeps the card from jumping.
+/// The live graph under the big number. Its own view, so a new point redraws only the chart; without a graph an
+/// empty space of the same height keeps the card from jumping when a run starts.
 private struct LiveChart: View {
     let store: StoreOf<SpeedTest>
 
@@ -172,13 +247,12 @@ private struct LiveChart: View {
                 tint: series.direction == .download ? Palette.download : Palette.upload
             )
             // New points slide in over one sample interval, like the numbers above.
-            .animation(
-                reduceMotion ? nil : .linear(duration: SpeedTest.configuration.sampleInterval.inSeconds),
-                value: series.points
-            )
-        } else if store.isRunning {
+            .animation(.counting(reduceMotion: reduceMotion), value: series.points)
+            // The axis labels stop growing before they crowd out the graph; VoiceOver skips the chart anyway.
+            .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+        } else {
             Color.clear
-                .frame(height: 120)
+                .frame(height: SpeedChart.height)
         }
     }
 }
@@ -231,6 +305,7 @@ private struct ClientIPLine: View {
         text
             .font(.footnote)
             .foregroundStyle(Palette.secondaryText)
+            .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal)
             .accessibilityIdentifier("ipField")

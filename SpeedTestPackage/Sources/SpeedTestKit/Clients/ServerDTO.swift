@@ -7,24 +7,14 @@
 
 import Foundation
 
-/// One element of `GET /api/v2/servers`. `providerUrl` is ignored. Fields the app doesn't show are
-/// optional, so a missing one doesn't cost a usable server.
+/// One element of `GET /api/v2/servers`. Only the fields the app uses are decoded; the rest (country, speed,
+/// `providerUrl`) are ignored, so a missing one doesn't cost a usable server.
 struct ServerDTO: Decodable, Sendable {
     let url: String
     let latitude: Double
     let longitude: Double
     let provider: String
     let city: String
-    let country: String?
-    let countryCode: String?
-    let speedMbps: Int?
-}
-
-extension ServerDTO: DomainModelConvertible {
-    /// The server this entry describes, or `nil` when the app can't use it.
-    func toDomainModel() -> Server? {
-        Server(dto: self)
-    }
 }
 
 extension Server {
@@ -41,21 +31,14 @@ extension Server {
         self.init(
             url: url,
             host: host,
-            port: url.port ?? Self.httpsDefaultPort,
             coordinate: Coordinate(latitude: dto.latitude, longitude: dto.longitude),
             provider: dto.provider,
-            city: dto.city,
-            country: dto.country ?? "",
-            countryCode: dto.countryCode ?? "",
-            speedMbps: dto.speedMbps ?? 0
+            city: dto.city
         )
     }
 
     /// Every test server the directory lists is a subdomain of this.
     static let testServerDomain = ".wifiman.me"
-
-    /// The port an `https` URL means when it doesn't name one.
-    private static let httpsDefaultPort = 443
 }
 
 extension ServerDTO {
@@ -66,7 +49,7 @@ extension ServerDTO {
         let elements = try JSONDecoder().decode([Lossy].self, from: data)
         var seen = Set<URL>()
         return elements
-            .compactMap { $0.dto?.toDomainModel() }
+            .compactMap { $0.dto.flatMap(Server.init(dto:)) }
             .filter { seen.insert($0.url).inserted }
     }
 }

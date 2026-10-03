@@ -12,7 +12,7 @@ import SpeedTestKit
 import SwiftUI
 
 /// "Closest servers", filling in live as each ICMP result arrives. The visible proof of real ICMP.
-/// A `Section`, so it sits in a `List` next to the history.
+/// A `Section`, so it sits in a `List` under the upload switch.
 struct ServersSection: View {
     let candidates: IdentifiedArrayOf<Candidate>
     let selectedID: Server.ID?
@@ -33,49 +33,67 @@ struct ServersSection: View {
     }
 }
 
+/// The name and distance on the left and the ping on the right; at accessibility text sizes the ping goes under
+/// the name, which then wraps in full.
 private struct ServerRow: View {
     let candidate: Candidate
     let isSelected: Bool
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(alignment: isStacked ? .firstTextBaseline : .center, spacing: 8) {
             Image(systemName: "star.fill")
                 .font(.caption)
                 .foregroundStyle(Palette.download)
                 .opacity(isSelected ? 1 : 0)
                 .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(verbatim: candidate.server.name)
-                    .lineLimit(2)
-
-                let distance = SpeedFormat.distance(meters: candidate.distance)
-                if !distance.isEmpty {
-                    Text(verbatim: distance)
-                        .font(.caption)
-                        .foregroundStyle(Palette.secondaryText)
+            if isStacked {
+                VStack(alignment: .leading, spacing: 2) {
+                    details
+                    ping
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                details
+
+                Spacer(minLength: 8)
+
+                ping
             }
-
-            Spacer(minLength: 8)
-
-            ping
         }
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+
+    private var isStacked: Bool {
+        dynamicTypeSize.isAccessibilitySize
+    }
+
+    private var details: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(verbatim: candidate.server.name)
+                .lineLimit(isStacked ? nil : 2)
+                .fixedSize(horizontal: false, vertical: isStacked)
+
+            let distance = SpeedFormat.distance(meters: candidate.distance)
+            if !distance.isEmpty {
+                Text(verbatim: distance)
+                    .font(.caption)
+                    .foregroundStyle(Palette.secondaryText)
+            }
+        }
     }
 
     @ViewBuilder
     private var ping: some View {
         switch candidate.ping {
         case let .finished(result):
-            Text(verbatim: SpeedFormat.pingSummary(
-                milliseconds: result.median?.inMilliseconds,
-                received: result.received,
-                sent: result.sent
-            ))
-            .monospacedDigit()
-            .foregroundStyle(result.isReachable ? Palette.success : Palette.secondaryText)
+            Text(verbatim: result.summary)
+                .monospacedDigit()
+                .accessibilityLabel(Text(verbatim: result.spokenSummary))
+                .foregroundStyle(result.isReachable ? Palette.success : Palette.secondaryText)
 
         case .pending:
             ProgressView()

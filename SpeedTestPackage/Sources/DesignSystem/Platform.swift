@@ -62,7 +62,7 @@ public extension View {
         #if os(macOS)
             buttonStyle(.borderedProminent)
                 .controlSize(.large)
-                .tint(role == .start ? Palette.download : Palette.error)
+                .tint(role == .start ? Palette.startFill : Palette.stopFill)
         #else
             buttonStyle(CapsuleButtonStyle(role: role))
         #endif

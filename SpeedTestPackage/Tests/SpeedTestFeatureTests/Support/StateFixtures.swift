@@ -45,12 +45,12 @@ extension SpeedTest.State {
         return SpeedTest.Selection(server: winner.server, ping: result, reason: .lowestPing)
     }
 
-    /// 1. Idle, first launch.
+    /// Idle, first launch.
     static var idleFixture: Self {
         Self()
     }
 
-    /// 2. Pinging: two servers have answered, three are pending.
+    /// Pinging: two servers have answered, three are pending.
     static var pingingFixture: Self {
         var state = Self()
         state.phase = .pinging
@@ -75,7 +75,7 @@ extension SpeedTest.State {
         return state
     }
 
-    /// 3. Finished: download and upload averages.
+    /// Finished: download and upload averages.
     static var finishedFixture: Self {
         var state = downloadingFixture
         state.downloadSamples = downloadSeries
@@ -86,14 +86,14 @@ extension SpeedTest.State {
         return state
     }
 
-    /// 4. Stopped by the user at 7.5 s.
+    /// Stopped by the user at 7.5 s.
     static var stoppedFixture: Self {
         var state = downloadingFixture
         state.interrupt(.stopped)
         return state
     }
 
-    /// 5. Degraded: location off (servers by IP, no distances), ICMP blocked, still downloading.
+    /// Degraded: location off (servers by IP, no distances), ICMP blocked, still downloading.
     static var degradedFixture: Self {
         var state = Self()
         state.phase = .downloading
@@ -109,7 +109,7 @@ extension SpeedTest.State {
         return state
     }
 
-    /// 6. Failed: offline.
+    /// Failed: offline.
     static var failedFixture: Self {
         var state = Self()
         state.phase = .failed(.offline)

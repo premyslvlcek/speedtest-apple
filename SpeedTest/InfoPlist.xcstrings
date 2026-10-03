@@ -19,13 +19,18 @@
       }
     },
     "CFBundleName" : {
-      "comment" : "Bundle name",
-      "extractionState" : "extracted_with_value",
+      "comment" : "The app's short name: the Mac's app menu (About, Quit) and the Dock.",
       "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Test rychlosti"
+          }
+        },
         "en" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "SpeedTest"
+            "state" : "translated",
+            "value" : "Speed Test"
           }
         }
       }

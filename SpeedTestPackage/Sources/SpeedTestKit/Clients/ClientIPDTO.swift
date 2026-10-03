@@ -12,12 +12,6 @@ struct ClientIPDTO: Decodable, Sendable {
     let isp: String?
 }
 
-extension ClientIPDTO: DomainModelConvertible {
-    func toDomainModel() -> ClientIP {
-        ClientIP(dto: self)
-    }
-}
-
 extension ClientIP {
     /// The address a directory answer carries. An empty provider counts as unknown.
     init(dto: ClientIPDTO) {

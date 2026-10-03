@@ -8,7 +8,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Průměr stahování: %@ megabitů za sekundu"
+            "value" : "Průměr stahování v megabitech za sekundu: %@"
           }
         },
         "en" : {
@@ -26,7 +26,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ megabitů za sekundu"
+            "value" : "v megabitech za sekundu: %@"
           }
         },
         "en" : {
@@ -51,6 +51,60 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No value"
+          }
+        }
+      }
+    },
+    "accessibility.tagAverage" : {
+      "comment" : "What VoiceOver reads for the \"avg\" tag after a speed.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "průměr"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "average"
+          }
+        }
+      }
+    },
+    "accessibility.tagPartialAverage" : {
+      "comment" : "What VoiceOver reads for the \"avg · partial\" tag after a speed.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "částečný průměr"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "partial average"
+          }
+        }
+      }
+    },
+    "accessibility.uploadAverage" : {
+      "comment" : "VoiceOver, after a run that measured upload; the argument is the formatted number, e.g. 92.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Průměr odesílání v megabitech za sekundu: %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upload average: %@ megabits per second"
           }
         }
       }
@@ -86,7 +140,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Run again"
+            "value" : "Run Again"
           }
         }
       }
@@ -140,7 +194,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Try again"
+            "value" : "Try Again"
           }
         }
       }
@@ -224,7 +278,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Zdá se, že nejste připojeni k internetu. Zkontrolujte Wi-Fi nebo mobilní data a zkuste to znovu."
+            "value" : "Zdá se, že nejste připojeni k internetu. Zkontrolujte Wi-Fi nebo mobilní data a zkuste to znovu."
           }
         },
         "en" : {
@@ -260,7 +314,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Test se nepodařilo spustit na žádném z blízkých serverů. Zkuste to znovu."
+            "value" : "Test se nepodařilo spustit na žádném z blízkých serverů. Zkuste to znovu."
           }
         },
         "en" : {
@@ -368,13 +422,13 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Najde 5 nejbližších testovacích serverů, změří k nim ping přes ICMP a na nejrychlejším pak měří stahování 15 s a odesílání 10 s."
+            "value" : "Najde 5 nejbližších testovacích serverů, změří k nim ping přes ICMP a na nejrychlejším pak 15 s měří rychlost stahování."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Finds the 5 closest speed test servers, pings each one over ICMP, then measures download for 15 s and upload for 10 s on the fastest."
+            "value" : "Finds the 5 closest speed test servers, pings each one over ICMP, then measures the download speed on the fastest for 15 s."
           }
         }
       }
@@ -433,6 +487,24 @@
         }
       }
     },
+    "menu.runAgain" : {
+      "comment" : "Mac Test menu item (⌘R) after a run has ended: starts a new one.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spustit test znovu"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Run Test Again"
+          }
+        }
+      }
+    },
     "menu.startTest" : {
       "comment" : "Mac Test menu item (⌘R) that starts a speed test.",
       "extractionState" : "manual",
@@ -487,20 +559,62 @@
         }
       }
     },
-    "note.enableInSettings" : {
-      "comment" : "Button under the location-off note; opens Settings.",
+    "menu.tryAgain" : {
+      "comment" : "Mac Test menu item (⌘R) after a run failed: tries again.",
       "extractionState" : "manual",
       "localizations" : {
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Zapnout v Nastavení"
+            "value" : "Zkusit znovu"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Enable in Settings"
+            "value" : "Try Again"
+          }
+        }
+      }
+    },
+    "note.enableInSettings" : {
+      "comment" : "Button under the location-off note; opens Settings. On the Mac the app is System Settings.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "variations" : {
+            "device" : {
+              "mac" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Zapnout v Nastavení systému"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Zapnout v Nastavení"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "device" : {
+              "mac" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Enable in System Settings"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Enable in Settings"
+                }
+              }
+            }
           }
         }
       }
@@ -566,7 +680,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Připojuji…"
+            "value" : "Připojování…"
           }
         },
         "en" : {
@@ -584,13 +698,13 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Stahování · průměr"
+            "value" : "Stahování · průměr"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Download · average"
+            "value" : "Download · average"
           }
         }
       }
@@ -602,13 +716,13 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Stahování · %@"
+            "value" : "Stahování · %@"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Downloading · %@"
+            "value" : "Downloading · %@"
           }
         }
       }
@@ -638,7 +752,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hledám servery…"
+            "value" : "Hledání serverů…"
           }
         },
         "en" : {
@@ -650,55 +764,91 @@
       }
     },
     "phase.interruptedBackground" : {
-      "comment" : "Phase label when the iOS app went to the background during a run.",
+      "comment" : "Phase label: the run stopped because the app went to the background.",
       "extractionState" : "manual",
       "localizations" : {
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Přerušeno · aplikace přešla na pozadí"
+            "value" : "Aplikace přešla na pozadí"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Interrupted · app went to background"
+            "value" : "App went to background"
           }
         }
       }
     },
     "phase.interruptedConnectionLost" : {
-      "comment" : "Phase label when every connection failed during a transfer.",
+      "comment" : "Phase label: the run stopped because every connection failed.",
       "extractionState" : "manual",
       "localizations" : {
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Přerušeno · spojení ztraceno"
+            "value" : "Spojení se ztratilo"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Interrupted · connection lost"
+            "value" : "Connection lost"
+          }
+        }
+      }
+    },
+    "phase.interruptedDownloadAverage" : {
+      "comment" : "Phase label after an interruption during the upload; the argument is the reason (phase.interrupted…). The big number shows the finished download's average.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · průměr stahování"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · download average"
           }
         }
       }
     },
     "phase.interruptedNetworkChanged" : {
-      "comment" : "Phase label when the network changed (e.g. Wi-Fi to mobile data) during a transfer.",
+      "comment" : "Phase label: the run stopped because the network changed.",
       "extractionState" : "manual",
       "localizations" : {
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Přerušeno · síť se změnila"
+            "value" : "Síť se změnila"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Interrupted · network changed"
+            "value" : "Network changed"
+          }
+        }
+      }
+    },
+    "phase.interruptedPartialAverage" : {
+      "comment" : "Phase label after an interruption during the download; the argument is the reason (phase.interrupted…). The big number shows the average of the part that ran.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · částečný průměr"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · partial average"
           }
         }
       }
@@ -710,7 +860,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Zjišťuji polohu…"
+            "value" : "Zjišťování polohy…"
           }
         },
         "en" : {
@@ -728,22 +878,22 @@
         "cs" : {
           "variations" : {
             "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Pinguji %lld server…"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Pinguji %lld servery…"
+                  "value" : "Měření pingu na %lld serverech…"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Měření pingu na %lld serveru…"
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Pinguji %lld serverů…"
+                  "value" : "Měření pingu na %lld serverech…"
                 }
               }
             }
@@ -812,13 +962,13 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Zastaveno · průměr stahování"
+            "value" : "Zastaveno · průměr stahování"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Stopped · download average"
+            "value" : "Stopped · download average"
           }
         }
       }
@@ -830,13 +980,13 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Zastaveno v %@ · průměr"
+            "value" : "Zastaveno po %@ · částečný průměr"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Stopped at %@ · average"
+            "value" : "Stopped at %@ · partial average"
           }
         }
       }
@@ -848,13 +998,13 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Odesílání · %@"
+            "value" : "Odesílání · %@"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Uploading · %@"
+            "value" : "Uploading · %@"
           }
         }
       }
@@ -902,7 +1052,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Měřit i odesílání"
+            "value" : "Měřit i odesílání"
           }
         },
         "en" : {
@@ -920,13 +1070,13 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Po 15s stahování přidá 10s test odesílání."
+            "value" : "Po 15 s stahování přidá 10 s test odesílání."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Adds a 10 s upload test after the 15 s download."
+            "value" : "Adds a 10 s upload test after the 15 s download."
           }
         }
       }
@@ -956,13 +1106,13 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "průměr · částečný"
+            "value" : "částečný průměr"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "avg · partial"
+            "value" : "partial avg"
           }
         }
       }
@@ -992,7 +1142,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "vybírám…"
+            "value" : "výběr…"
           }
         },
         "en" : {
@@ -1004,7 +1154,7 @@
       }
     },
     "value.notRun" : {
-      "comment" : "Upload row value when the run stopped before the upload.",
+      "comment" : "Upload row value when the run stopped before the upload measured anything (it hadn't started, or was still in its first second).",
       "extractionState" : "manual",
       "localizations" : {
         "cs" : {
@@ -1028,13 +1178,13 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ Mb/s"
+            "value" : "%@ Mb/s"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ Mbps"
+            "value" : "%@ Mbps"
           }
         }
       }

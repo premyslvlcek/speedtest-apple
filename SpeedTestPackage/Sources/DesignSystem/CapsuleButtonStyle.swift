@@ -26,7 +26,7 @@ public struct CapsuleButtonStyle: ButtonStyle {
             .foregroundStyle(role == .start ? Color.white : Palette.error)
             .frame(maxWidth: .infinity, minHeight: 50)
             .padding(.horizontal, 16)
-            .background(Capsule().fill(role == .start ? Palette.download : Palette.stopBackground))
+            .background(Capsule().fill(role == .start ? Palette.startFill : Palette.stopBackground))
             .contentShape(Capsule())
             .opacity(configuration.isPressed ? 0.8 : 1)
             .animation(.easeOut(duration: 0.15), value: configuration.isPressed)

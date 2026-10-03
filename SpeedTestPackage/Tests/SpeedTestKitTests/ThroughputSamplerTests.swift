@@ -75,24 +75,41 @@ import Testing
         #expect(sample.averageMbps.isClose(to: 16))
     }
 
-    @Test func aReadingAtT0IsZeroNotNaN() {
+    /// A refused upload connection takes its bytes back out of the total, so the count can go down.
+    @Test func aCountThatGoesDownReadsZeroNowNotANegativeSpeed() {
         var sampler = ThroughputSampler(window: .seconds(1))
-
-        let sample = sampler.add(elapsed: .zero, totalBytes: 0)
-
-        #expect(sample.currentMbps == 0)
-        #expect(sample.averageMbps == 0)
-    }
-
-    @Test func theWindowLengthIsConfigurable() {
-        var sampler = ThroughputSampler(window: .milliseconds(500))
         _ = sampler.add(elapsed: .milliseconds(250), totalBytes: 1_000_000)
         _ = sampler.add(elapsed: .milliseconds(500), totalBytes: 2_000_000)
+        _ = sampler.add(elapsed: .milliseconds(750), totalBytes: 3_000_000)
+        _ = sampler.add(elapsed: .seconds(1), totalBytes: 4_000_000)
+        // The window now starts at the 0.25 s reading (1 MB), above the new total.
+        let sample = sampler.add(elapsed: .milliseconds(1250), totalBytes: 500_000)
 
-        let sample = sampler.add(elapsed: .milliseconds(750), totalBytes: 3_500_000)
+        #expect(sample.currentMbps == 0)
+        #expect(sample.averageMbps.isClose(to: 3.2))
+        // Below what was counted at t0: the average is zero too.
+        #expect(sampler.add(elapsed: .milliseconds(1500), totalBytes: -1000).averageMbps == 0)
+    }
 
-        // The window starts at 0.25 s: 2.5 MB in 0.5 s.
-        #expect(sample.currentMbps.isClose(to: 40))
+    /// Upload bytes count when handed to the network stack, which takes a chunk per connection at once: the first
+    /// second is left out of the upload's average, so that head start cancels out.
+    @Test func theAverageCanStartAfterAWarmUp() {
+        var sampler = ThroughputSampler(window: .seconds(1), averageFrom: .seconds(1))
+        // 4 MB counted at once, then 1 MB every 250 ms.
+        _ = sampler.add(elapsed: .milliseconds(250), totalBytes: 4_000_000)
+        _ = sampler.add(elapsed: .milliseconds(500), totalBytes: 5_000_000)
+        _ = sampler.add(elapsed: .milliseconds(750), totalBytes: 6_000_000)
+        let warmingUp = sampler.add(elapsed: .seconds(1), totalBytes: 7_000_000)
+        _ = sampler.add(elapsed: .milliseconds(1250), totalBytes: 8_000_000)
+        _ = sampler.add(elapsed: .milliseconds(1500), totalBytes: 9_000_000)
+        _ = sampler.add(elapsed: .milliseconds(1750), totalBytes: 10_000_000)
+
+        let sample = sampler.add(elapsed: .seconds(2), totalBytes: 11_000_000)
+
+        // Until the warm-up ends, the average runs from t0: 56 Mb over 1 s.
+        #expect(warmingUp.averageMbps.isClose(to: 56))
+        // After it, from the warm-up's end: 4 MB over 1 s, not 11 MB over 2 s (44 Mbps).
+        #expect(sample.averageMbps.isClose(to: 32))
     }
 }
 

@@ -15,8 +15,7 @@ import Testing
     /// The tests pin a locale, so they don't depend on the machine's region.
     static let english = Locale(identifier: "en_US")
 
-    static let mbpsCases: [(Double?, String)] = [
-        (nil, "—"),
+    static let mbpsCases: [(Double, String)] = [
         (-1, "—"),
         (.nan, "—"),
         (12.35, "12.4"),
@@ -26,16 +25,16 @@ import Testing
     ]
 
     @Test(arguments: mbpsCases)
-    func mbps(value: Double?, expected: String) {
+    func mbps(value: Double, expected: String) {
         #expect(SpeedFormat.mbps(value, locale: Self.english) == expected)
     }
 
     static let pingCases: [(Double?, String)] = [
         (nil, "—"),
         (-3, "—"),
-        (0.4, "<1 ms"),
-        (1, "1 ms"),
-        (5.6, "6 ms")
+        (0.4, "<1\u{00A0}ms"),
+        (1, "1\u{00A0}ms"),
+        (5.6, "6\u{00A0}ms")
     ]
 
     @Test(arguments: pingCases)
@@ -44,11 +43,20 @@ import Testing
     }
 
     @Test func pingSummaryWithEveryReply() {
-        #expect(SpeedFormat.pingSummary(milliseconds: 5.8, received: 5, sent: 5, locale: Self.english) == "6 ms")
+        #expect(SpeedFormat.pingSummary(milliseconds: 5.8, received: 5, sent: 5, locale: Self.english) == "6\u{00A0}ms")
     }
 
     @Test func pingSummaryShowsLoss() {
-        #expect(SpeedFormat.pingSummary(milliseconds: 5.8, received: 3, sent: 5, locale: Self.english) == "6 ms · 3/5")
+        let summary = SpeedFormat.pingSummary(milliseconds: 5.8, received: 3, sent: 5, locale: Self.english)
+        #expect(summary == "6\u{00A0}ms · 3/5")
+    }
+
+    /// VoiceOver hears "3 of 5 replies", not a fraction. Without loss it hears what is shown.
+    @Test func spokenPingSummarySaysHowManyReplied() {
+        #expect(SpeedFormat.spokenPingSummary(milliseconds: 5.8, received: 3, sent: 5, locale: Self.english)
+            == "6\u{00A0}ms, 3 of 5 replies")
+        #expect(SpeedFormat.spokenPingSummary(milliseconds: 5.8, received: 5, sent: 5, locale: Self.english)
+            == "6\u{00A0}ms")
     }
 
     @Test func pingSummaryWithNoReply() {
@@ -56,8 +64,8 @@ import Testing
     }
 
     static let elapsedCases: [(Double, String)] = [
-        (-0.2, "0.0 s"),
-        (7.45, "7.5 s")
+        (-0.2, "0.0\u{00A0}s"),
+        (7.45, "7.5\u{00A0}s")
     ]
 
     @Test(arguments: elapsedCases)
@@ -68,10 +76,10 @@ import Testing
     static let distanceCases: [(Double?, String)] = [
         (nil, ""),
         (-5, ""),
-        (40, "<0.1 km"),
-        (400, "0.4 km"),
+        (40, "<0.1\u{00A0}km"),
+        (400, "0.4\u{00A0}km"),
         // Rounds to 10.0 km at one decimal, so it's shown whole.
-        (9960, "10 km")
+        (9960, "10\u{00A0}km")
     ]
 
     @Test(arguments: distanceCases)
@@ -83,7 +91,7 @@ import Testing
         let czech = Locale(identifier: "cs_CZ")
 
         #expect(SpeedFormat.mbps(12.35, locale: czech) == "12,4")
-        #expect(SpeedFormat.distance(meters: 400, locale: czech) == "0,4 km")
+        #expect(SpeedFormat.distance(meters: 400, locale: czech) == "0,4\u{00A0}km")
     }
 
     @Test func noReplyIsTranslated() {

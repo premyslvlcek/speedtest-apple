@@ -72,6 +72,24 @@
           }
         }
       }
+    },
+    "ping.spokenReplies" : {
+      "comment" : "VoiceOver, for a ping with lost replies: the ping (e.g. 6 ms), then how many of the requests came back.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, odpovědí: %2$lld z %3$lld"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$lld of %3$lld replies"
+          }
+        }
+      }
     }
   },
   "version" : "1.1"

@@ -81,7 +81,6 @@ jobs:
             -scheme SpeedTestPackage-Package \
             -destination 'platform=macOS' \
             -skipMacroValidation \
-            -skip-testing:SpeedTestFeatureTests/SnapshotTests \
             -quiet 2>&1 | tee ../package-tests-macos.log
           ../.github/scripts/check-warnings.sh ../package-tests-macos.log
 
@@ -93,7 +92,6 @@ jobs:
             -scheme SpeedTestPackage-Package \
             -destination "$IOS_DESTINATION" \
             -skipMacroValidation \
-            -skip-testing:SpeedTestFeatureTests/SnapshotTests \
             -quiet 2>&1 | tee ../package-tests-ios.log
           ../.github/scripts/check-warnings.sh ../package-tests-ios.log
 

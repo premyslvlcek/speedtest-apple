@@ -60,7 +60,7 @@ public struct HistoryView: View {
                         .disabled(store.entries.isEmpty)
                     }
                 }
-                .confirmationDialog($store.scope(\.confirmation, action: \.confirmation))
+                .alert($store.scope(\.alert, action: \.alert))
         }
         #if os(macOS)
         .frame(minWidth: 360, minHeight: 420)
@@ -83,22 +83,26 @@ extension HistoryView {
 /// One result: where and when, the speeds and the ping, and the address the test ran from.
 struct HistoryRow: View {
     let entry: HistoryEntry
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(verbatim: "\(entry.serverProvider) · \(entry.serverCity)")
+            // At accessibility text sizes everything stacks: side by side, the date and the numbers break apart.
+            header {
+                Text(verbatim: "\(entry.serverProvider)\u{00A0}· \(entry.serverCity)")
                     .font(.headline)
-                Spacer()
+                if !isStacked {
+                    Spacer()
+                }
                 Text(entry.date, format: .dateTime.day().month().hour().minute())
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
-            HStack(spacing: 16) {
-                speed(entry.downloadMbps, systemImage: "arrow.down")
+            values {
+                speed(entry.downloadMbps, systemImage: "arrow.down", tint: Palette.download)
                     .accessibilityLabel(Text(.historyDownloadAccessibility(SpeedFormat.mbps(entry.downloadMbps))))
                 if let upload = entry.uploadMbps {
-                    speed(upload, systemImage: "arrow.up")
+                    speed(upload, systemImage: "arrow.up", tint: Palette.upload)
                         .accessibilityLabel(Text(.historyUploadAccessibility(SpeedFormat.mbps(upload))))
                 }
                 Text(verbatim: SpeedFormat.ping(milliseconds: entry.pingMilliseconds))
@@ -115,11 +119,27 @@ struct HistoryRow: View {
         .accessibilityIdentifier("historyRow")
     }
 
-    private func speed(_ mbps: Double, systemImage: String) -> some View {
+    private var isStacked: Bool {
+        dynamicTypeSize.isAccessibilitySize
+    }
+
+    private var header: AnyLayout {
+        isStacked
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 2))
+            : AnyLayout(HStackLayout(alignment: .firstTextBaseline))
+    }
+
+    private var values: AnyLayout {
+        isStacked ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4)) : AnyLayout(HStackLayout(spacing: 16))
+    }
+
+    /// The arrow in the direction's color, as on the main screen.
+    private func speed(_ mbps: Double, systemImage: String, tint: Color) -> some View {
         Label {
             Text(.historySpeed(SpeedFormat.mbps(mbps)))
         } icon: {
             Image(systemName: systemImage)
+                .foregroundStyle(tint)
         }
     }
 

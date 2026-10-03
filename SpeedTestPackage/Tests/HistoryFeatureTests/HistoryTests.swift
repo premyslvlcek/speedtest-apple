@@ -7,62 +7,45 @@
 
 import ComposableArchitecture
 import Foundation
-import SQLiteData
 import Testing
 import TestSupport
 
 @testable import HistoryFeature
 
+/// The history lives in memory in tests (`defaultFileStorage`), and each test has its own.
 @MainActor
 @Suite(.mainSerialExecutor) struct HistoryTests {
-    @Test func entriesAreListedNewestFirst() async throws {
-        let store = try await Self.store(seeded: [Self.monday, Self.wednesday, Self.tuesday])
+    @Test func theLiveClientPutsANewRunFirst() {
+        @Shared(.history) var entries = [Self.entry(Self.monday)]
 
-        #expect(store.state.entries.map(\.date) == [Self.wednesday, Self.tuesday, Self.monday])
+        HistoryClient.live.save(Self.entry(Self.tuesday))
+
+        #expect(entries.map(\.date) == [Self.tuesday, Self.monday])
     }
 
-    @Test func deletingARowRemovesThatEntry() async throws {
-        let store = try await Self.store(seeded: [Self.monday, Self.tuesday, Self.wednesday])
+    @Test func deletingARowRemovesThatEntry() async {
+        let store = Self.store(seeded: [Self.wednesday, Self.tuesday, Self.monday])
 
-        // Row 1 of the newest-first list is Tuesday's. The delete is an effect: wait for it before reading.
-        await store.send(\.view.deleteTapped, IndexSet(integer: 1)).finish()
-        try await store.state.$entries.load()
-
-        #expect(store.state.entries.map(\.date) == [Self.wednesday, Self.monday])
+        await store.send(\.view.deleteTapped, IndexSet(integer: 1)) {
+            $0.$entries.withLock { $0 = [Self.entry(Self.wednesday), Self.entry(Self.monday)] }
+        }
     }
 
-    @Test func clearAsksFirstThenDeletesEverything() async throws {
-        let store = try await Self.store(seeded: [Self.monday, Self.tuesday])
+    @Test func clearAsksFirstThenDeletesEverything() async {
+        let store = Self.store(seeded: [Self.tuesday, Self.monday])
 
         await store.send(\.view.clearTapped) {
-            $0.confirmation = .clearAll
+            $0.alert = .clearAll
         }
-        await store.send(\.confirmation.presented.clearAll) {
-            $0.confirmation = nil
+        await store.send(\.alert.presented.clearAll) {
+            $0.alert = nil
+            $0.$entries.withLock { $0 = [] }
         }
-        .finish()
-        try await store.state.$entries.load()
-
-        #expect(store.state.entries.isEmpty)
     }
 
-    @Test func theLiveClientSavesIntoTheDatabase() async throws {
-        let store = try await Self.store(seeded: [Self.monday])
-        let client = withDependencies {
-            $0.defaultDatabase = store.dependencies.defaultDatabase
-        } operation: {
-            HistoryClient.live
-        }
-
-        try await client.save(Self.draft(Self.tuesday))
-        try await store.state.$entries.load()
-
-        #expect(store.state.entries.map(\.date) == [Self.tuesday, Self.monday])
-    }
-
-    @Test func doneDismissesTheSheet() async throws {
+    @Test func doneDismissesTheSheet() async {
         let dismissed = LockIsolated(false)
-        let store = try await Self.store(seeded: []) {
+        let store = Self.store(seeded: []) {
             $0.dismiss = DismissEffect { dismissed.setValue(true) }
         }
 
@@ -77,29 +60,21 @@ import TestSupport
     static let tuesday = monday.addingTimeInterval(86400)
     static let wednesday = tuesday.addingTimeInterval(86400)
 
-    /// A fresh, migrated database with one entry per date, and the list loaded from it.
+    /// A store whose history holds one entry per date, in the given order (newest first).
     private static func store(
         seeded dates: [Date],
         dependencies: (inout DependencyValues) -> Void = { _ in }
-    ) async throws -> TestStoreOf<History> {
-        let database = try historyDatabase()
-        try await database.write { db in
-            for date in dates {
-                try HistoryEntry.insert { draft(date) }.execute(db)
-            }
-        }
-        let store = TestStore(initialState: History.State()) {
+    ) -> TestStoreOf<History> {
+        @Shared(.history) var entries = dates.map(entry)
+        return TestStore(initialState: History.State()) {
             History()
         } withDependencies: {
-            $0.defaultDatabase = database
             dependencies(&$0)
         }
-        try await store.state.$entries.load()
-        return store
     }
 
-    nonisolated static func draft(_ date: Date) -> HistoryEntry.Draft {
-        HistoryEntry.Draft(
+    nonisolated static func entry(_ date: Date) -> HistoryEntry {
+        HistoryEntry(
             recordedAt: date,
             serverProvider: "jablonka.cz",
             serverCity: "Prague",

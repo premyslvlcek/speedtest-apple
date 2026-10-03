@@ -11,19 +11,15 @@ import Testing
 @testable import SpeedTestKit
 
 @Suite struct TransferRequestTests {
-    private let token = TransferToken(value: "4f1c2e9a-token", ttl: .seconds(80))
+    private let token = TransferToken(value: "4f1c2e9a-token")
 
     private func server() throws -> Server {
         try Server(
             url: #require(URL(string: "https://fast.example.invalid:4780")),
             host: "fast.example.invalid",
-            port: 4780,
             coordinate: Coordinate(latitude: 50.08, longitude: 14.42),
             provider: "Example",
-            city: "Prague",
-            country: "Czechia",
-            countryCode: "CZ",
-            speedMbps: 1000
+            city: "Prague"
         )
     }
 

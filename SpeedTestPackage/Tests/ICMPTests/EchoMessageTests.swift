@@ -77,16 +77,6 @@ import Testing
         #expect(request.dropFirst(8) == Captured.payload)
     }
 
-    // MARK: - Decoding requests (for test fakes that play the remote host)
-
-    @Test func anIPv4RequestIsParsed() {
-        #expect(EchoMessage(requestData: Data(Captured.ipv4Request), family: .ipv4) == Captured.message)
-    }
-
-    @Test func anIPv6RequestIsParsed() {
-        #expect(EchoMessage(requestData: Data(Captured.ipv6OwnRequest), family: .ipv6) == Captured.message)
-    }
-
     // MARK: - Decoding replies
 
     @Test func ipv4ReplyIsParsedPastItsIPHeader() {

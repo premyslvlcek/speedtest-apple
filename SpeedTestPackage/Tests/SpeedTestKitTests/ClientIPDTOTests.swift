@@ -14,7 +14,7 @@ import Testing
     @Test func anEmptyProviderCountsAsUnknown() throws {
         let data = Data(#"{"ip":"2001:db8::7","isp":""}"#.utf8)
 
-        let clientIP = try JSONDecoder().decode(ClientIPDTO.self, from: data).toDomainModel()
+        let clientIP = try ClientIP(dto: JSONDecoder().decode(ClientIPDTO.self, from: data))
 
         #expect(clientIP == ClientIP(address: "2001:db8::7", provider: nil))
     }

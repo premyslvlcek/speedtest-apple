@@ -15,19 +15,19 @@ import SwiftUI
 #endif
 
 @ViewAction(for: SpeedTest.self)
-public struct SpeedTestView: View {
-    @Bindable public var store: StoreOf<SpeedTest>
+struct SpeedTestView: View {
+    @Bindable var store: StoreOf<SpeedTest>
 
     @Environment(\.scenePhase) private var scenePhase
     #if os(iOS)
         @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     #endif
+    #if os(macOS)
+        /// Held while a test runs, so App Nap doesn't delay the sample timer of a hidden window.
+        @State private var activity: (any NSObjectProtocol)?
+    #endif
 
-    public init(store: StoreOf<SpeedTest>) {
-        self.store = store
-    }
-
-    public var body: some View {
+    var body: some View {
         NavigationStack {
             layout
                 .navigationTitle(Text(.appTitle))
@@ -46,8 +46,8 @@ public struct SpeedTestView: View {
         .onChange(of: scenePhase) { _, newValue in
             send(.scenePhaseChanged(newValue))
         }
-        .onChange(of: store.phase) { _, newValue in
-            announceIfFinished(newValue)
+        .onChange(of: store.phase) {
+            announce()
         }
         .sensoryFeedback(.success, trigger: store.phase) { _, newValue in
             newValue == .finished
@@ -56,6 +56,19 @@ public struct SpeedTestView: View {
         .onChange(of: store.isRunning) { _, isRunning in
             // Keep the screen awake during a test. Not `initial: true`: at launch nothing is running anyway.
             UIApplication.shared.isIdleTimerDisabled = isRunning
+        }
+        #endif
+        #if os(macOS)
+        .onChange(of: store.isRunning) { _, isRunning in
+            if isRunning {
+                activity = ProcessInfo.processInfo.beginActivity(
+                    options: .userInitiatedAllowingIdleSystemSleep,
+                    reason: "Speed test"
+                )
+            } else if let activity {
+                ProcessInfo.processInfo.endActivity(activity)
+                self.activity = nil
+            }
         }
         #endif
     }
@@ -79,7 +92,7 @@ public struct SpeedTestView: View {
         #endif
     }
 
-    /// iPhone: everything in one list, the button pinned at the bottom.
+    /// Compact width: everything in one list, the button pinned at the bottom.
     private var singleColumn: some View {
         List {
             Section {
@@ -100,14 +113,18 @@ public struct SpeedTestView: View {
         }
     }
 
-    /// Mac and iPad: the measurement and the button on the left, the upload switch and the servers on the right.
+    /// Regular width, and always on the Mac: the measurement and the button on the left, the upload switch and the servers on the right.
+    /// The measurement is the brief's screen, so its pane takes the space; the servers pane stays narrow.
     private var twoPanes: some View {
         HStack(spacing: 0) {
             ScrollView {
                 measurementPanel
+                    .frame(maxWidth: 560)
                     .padding(20)
+                    .frame(maxWidth: .infinity)
             }
-            .frame(minWidth: 340, idealWidth: 400, maxWidth: 520)
+            .frame(minWidth: 340, maxWidth: .infinity)
+            .layoutPriority(1)
             .safeAreaInset(edge: .bottom) {
                 startStopButton
                     .frame(maxWidth: 360)
@@ -124,7 +141,7 @@ public struct SpeedTestView: View {
                 serversSection
             }
             .speedTestListStyle()
-            .frame(minWidth: 280, idealWidth: 340)
+            .frame(minWidth: 280, idealWidth: 320, maxWidth: 320)
         }
         .background(Palette.screenBackground)
     }
@@ -174,12 +191,12 @@ public struct SpeedTestView: View {
         .accessibilityIdentifier("historyButton")
     }
 
-    private func announceIfFinished(_ phase: SpeedTest.Phase) {
-        guard phase == .finished, let average = store.download?.averageMbps else {
+    /// Once per ended run: the result, the reason it stopped, or the error (`announcement`).
+    private func announce() {
+        guard let announcement = store.announcement else {
             return
         }
 
-        let announcement = String(localized: .accessibilityDownloadAverage(SpeedFormat.mbps(average)))
         AccessibilityNotification.Announcement(announcement).post()
     }
 }

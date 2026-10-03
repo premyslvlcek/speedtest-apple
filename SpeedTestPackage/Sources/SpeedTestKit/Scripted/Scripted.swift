@@ -9,7 +9,7 @@ import Dependencies
 import ICMP
 
 // Scripted dependency clients: together they play a whole run in about 5 s with no network, no location prompt and
-// no ICMP. Xcode previews get them as the preview values; the UI tests switch them on at launch. Their delays
+// no ICMP. Xcode previews get them as the preview values; the UI test switches them on at launch. Their delays
 // run on the registered `continuousClock`, resolved when each value is created.
 
 public extension Locator {
@@ -33,7 +33,7 @@ public extension ServerDirectory {
                 return Fixtures.servers
             },
             token: {
-                TransferToken(value: "scripted", ttl: .seconds(80))
+                TransferToken(value: "scripted")
             },
             clientIP: {
                 Fixtures.clientIP

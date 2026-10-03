@@ -8,7 +8,7 @@
 import DesignSystem
 import SwiftUI
 
-/// The one button, pinned in the same place in every state: Start / Stop / Run again / Try again.
+/// The one button, pinned in the same place in every state: Start / Stop / Run Again / Try Again.
 struct StartStopButton: View {
     let title: SpeedTest.State.ButtonTitle
     let action: () -> Void

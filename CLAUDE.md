@@ -16,7 +16,7 @@ lowest latency. SwiftUI and The Composable Architecture (TCA) on top of a small 
   - `SpeedTestKit`: the dependency clients of a run, the transfer meter and the pure rules (server
     selection, throughput sampling, error mapping). No UI and no TCA.
   - `DesignSystem`: formatting, colors, button and card styles, the speed chart. Takes plain values.
-  - `HistoryFeature`: past results in SQLite through SQLiteData, with a reducer and a sheet.
+  - `HistoryFeature`: past results in a JSON file through `@Shared(.fileStorage)`, with a reducer and a sheet.
   - `SpeedTestFeature`: the reducer that drives a run step by step, and the screen.
 - `SpeedTestUITests/`: one XCUITest smoke test of the app's wiring against the scripted run (`-scriptedRun`, Debug
   builds only).
@@ -108,7 +108,8 @@ The tools are pinned in the `Mintfile`; `mint bootstrap` installs them.
   `SpeedTestError.directoryMapping` for the directory and token requests. Both return `nil` for cancellation.
 
 **Views**
-- `@Bindable public var store` with `@ViewAction(for:)` and `send(…)`.
+- `@Bindable var store` with `@ViewAction(for:)` and `send(…)`. Views are `public` only when another module uses them
+  (the app target only needs `SpeedTestScene`).
 - Child views take the store (or a scoped store) and read through it, never a copy of `store.state`: observation
   tracks what is read through the store, so a copy stops updating (the live number froze that way).
 - `@State` only for plain view-local values, with the initial value at the declaration and never assigned in an
@@ -116,7 +117,7 @@ The tools are pinned in the `Mintfile`; `mint bootstrap` installs them.
 - Sub-views as `private var x: some View` or small structs; `#Preview` for previews.
 - Strings: see **Localization** below. Numbers built in code use `Text(verbatim:)`.
 - Accessibility identifiers: `startStopButton`, `serverField`, `pingField`, `downloadField`, `uploadField`,
-  `phaseLabel`, `bigNumber`, `uploadToggle`, `ipField`, `historyButton`, `historyRow`.
+  `bigNumber` (its label is the phase), `uploadToggle`, `ipField`, `historyButton`, `historyRow`.
 
 **Localization** (English, the default, and Czech)
 - Every user-facing string lives in its module's String Catalog, `Resources/Localizable.xcstrings` (format 1.1,
@@ -137,7 +138,9 @@ The tools are pinned in the `Mintfile`; `mint bootstrap` installs them.
   `String(localized:bundle:locale:)` ignores that locale when it picks the language.
 
 **Tests**
-- Swift Testing: `@MainActor @Suite struct XTests`, exhaustive `TestStore`.
+- Swift Testing: `@MainActor @Suite struct XTests`, exhaustive `TestStore`. A test that pins only the end of a long
+  path (failover once, Stop mid-upload) may set `exhaustivity = .off` and `#expect` on the final state; the path's
+  steps are pinned exhaustively elsewhere.
 - Dependencies through the `.dependency(…)` and `.dependencies { … }` test traits, or `withDependencies:`.
 - Actions sent and received by key path: `store.send(\.view.startStopTapped)`.
 - `TestClock`/`ImmediateClock` for time, `LockIsolated` for capturing calls. Tests never assert on wall-clock time
@@ -152,7 +155,6 @@ The tools are pinned in the `Mintfile`; `mint bootstrap` installs them.
   too: a `TestStore` turns the switch on and, when released, puts back what it found, which could switch it off
   under another suite. `TestClock` wakes sleepers on time, so a rule about late wake-ups is tested as a pure
   function.
-- Snapshot tests run locally only (references are recorded on one machine); CI skips them.
 - Every test and every assertion must be able to fail for a plausible bug in this repository's code. No
   tautologies: don't restate a literal or a one-line computed property, don't test the standard library or a
   dependency, and don't round-trip our own encoder and decoder when fixtures already pin both directions.
@@ -193,4 +195,4 @@ The tools are pinned in the `Mintfile`; `mint bootstrap` installs them.
 - The package tests pass on macOS and on the iOS simulator, and the app builds for iOS and macOS (commands above).
 - `./swiftformat.sh && ./swiftlint.sh` are clean.
 - New user-facing strings have an `en` and a `cs` translation.
-- Snapshot tests pass locally if a view changed; re-record only on purpose, and look at the new images.
+- The UI test passes on the iOS simulator if the screen or its wiring changed (command above).

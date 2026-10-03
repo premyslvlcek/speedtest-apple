@@ -22,7 +22,6 @@ extension SpeedTest.State {
         }
     }
 
-    /// Clears the previous run.
     mutating func reset() {
         self = Self()
     }
@@ -95,11 +94,11 @@ extension SpeedTest.State {
 
 extension SpeedTest.State {
     /// What the history keeps of this run: the server, the ping, both averages and the address.
-    func historyEntry(date: Date) -> HistoryEntry.Draft? {
+    func historyEntry(date: Date) -> HistoryEntry? {
         guard let server = selection?.server, let download else {
             return nil
         }
-        return HistoryEntry.Draft(
+        return HistoryEntry(
             recordedAt: date,
             serverProvider: server.provider,
             serverCity: server.city,

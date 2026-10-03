@@ -9,31 +9,45 @@
 ///
 /// Pure: the transfer meter owns the clock and the 250 ms tick, reads the byte counter and calls `add`.
 /// Readings must arrive in increasing `elapsed` order.
-public struct ThroughputSampler: Sendable {
+struct ThroughputSampler: Sendable {
     private struct Reading: Sendable {
         var elapsed: Duration
         var totalBytes: Int64
     }
 
     private let window: Duration
+    /// Where the average starts: t0, or the end of a warm-up whose bytes are left out (upload).
+    private let averageFrom: Duration
     /// Every reading so far, starting with the origin (t0, no bytes). A 15 s transfer sampled every 250 ms
     /// adds 60, which is too few to be worth pruning.
     private var readings = [Reading(elapsed: .zero, totalBytes: 0)]
 
-    public init(window: Duration) {
+    init(window: Duration, averageFrom: Duration = .zero) {
         self.window = window
+        self.averageFrom = averageFrom
     }
 
-    public mutating func add(elapsed: Duration, totalBytes: Int64) -> ThroughputSample {
+    mutating func add(elapsed: Duration, totalBytes: Int64) -> ThroughputSample {
         // The latest reading at or before the window's start; in the first window there is none, so the origin.
         let base = readings.last { $0.elapsed <= elapsed - window } ?? readings[0]
+        // Until the warm-up has passed there's nothing after it to average: until then, from t0.
+        let averageBase = elapsed > averageFrom
+            ? readings.last { $0.elapsed <= averageFrom } ?? readings[0]
+            : readings[0]
         readings.append(Reading(elapsed: elapsed, totalBytes: totalBytes))
 
         return ThroughputSample(
             elapsed: elapsed,
             totalBytes: totalBytes,
-            currentMbps: Self.megabitsPerSecond(bytes: totalBytes - base.totalBytes, over: elapsed - base.elapsed),
-            averageMbps: Self.megabitsPerSecond(bytes: totalBytes, over: elapsed)
+            // A refused upload connection takes its bytes back out, so the total can go down: zero, never negative.
+            currentMbps: max(
+                0,
+                Self.megabitsPerSecond(bytes: totalBytes - base.totalBytes, over: elapsed - base.elapsed)
+            ),
+            averageMbps: max(
+                0,
+                Self.megabitsPerSecond(bytes: totalBytes - averageBase.totalBytes, over: elapsed - averageBase.elapsed)
+            )
         )
     }
 

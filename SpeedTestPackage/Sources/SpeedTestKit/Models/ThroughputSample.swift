@@ -12,7 +12,8 @@ public struct ThroughputSample: Sendable, Equatable {
     public var totalBytes: Int64
     /// Over the last second, or since t0 when that's shorter.
     public var currentMbps: Double
-    /// Total bytes over `elapsed`.
+    /// Bytes over time since t0, or since the end of the upload's warm-up; measured at the real time of the reading,
+    /// which `elapsed` may round down to the duration.
     public var averageMbps: Double
 
     public init(elapsed: Duration, totalBytes: Int64, currentMbps: Double, averageMbps: Double) {

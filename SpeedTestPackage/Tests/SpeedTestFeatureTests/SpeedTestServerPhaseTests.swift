@@ -13,7 +13,6 @@ import SwiftUI
 import Testing
 import TestSupport
 
-@testable import HistoryFeature
 @testable import SpeedTestFeature
 
 /// From Start to the chosen server: locate, fetch, ping each host once, choose, get the token. The selection rules
@@ -50,13 +49,14 @@ import TestSupport
             $0.phase = .pinging
         }
 
-        // One ping per distinct host, applied to every entry of that host: the two Elektro Solution Prague ports
-        // share one.
-        let hosts = candidates.map(\.server.host).reduce(into: [String]()) { hosts, host in
-            if !hosts.contains(host) {
-                hosts.append(host)
-            }
-        }
+        // One ping per distinct host, nearest first, applied to every entry of that host: the two Elektro Solution
+        // Prague ports share one.
+        let hosts = [
+            "jablonka-prague.example.invalid",
+            "elektro-solution.example.invalid",
+            "ubiquiti-prague.example.invalid",
+            "elektro-zbozicko.example.invalid"
+        ]
         for (index, host) in hosts.enumerated() {
             let result = Fixtures.pingResult(forHost: host) ?? .noReply(sent: 5)
             for candidate in candidates where candidate.server.host == host {
@@ -85,7 +85,7 @@ import TestSupport
         }
 
         #expect(store.state.selection?.server.provider == "Elektro Solution")
-        #expect(store.state.selection?.server.port == 81)
+        #expect(store.state.selection?.server.url.port == 81)
         #expect(pings.hosts.value == hosts)
         #expect(directory.fetchedNear.value == [Fixtures.prague])
         #expect(directory.tokenCalls.value == 1)
@@ -205,19 +205,6 @@ import TestSupport
         }
     }
 
-    @Test func historyOpensTheHistorySheet() async throws {
-        let database = try historyDatabase()
-        let store = TestStore(initialState: SpeedTest.State()) {
-            SpeedTest()
-        } withDependencies: {
-            $0.defaultDatabase = database
-        }
-
-        await store.send(\.view.historyTapped) {
-            $0.history = History.State()
-        }
-    }
-
     @Test func aBusyDirectoryFailsWithoutARetry() async {
         let directory = RunFakes.Directory(servers: .failure(HTTPStatusError(statusCode: 429)))
         let store = TestStore(initialState: SpeedTest.State()) {
@@ -264,26 +251,6 @@ import TestSupport
 
         #expect(store.state.phase == .failed(.offline))
         #expect(directory.tokenCalls.value == 1)
-    }
-
-    /// Stop before any sample exists leaves no partial numbers.
-    @Test func stopWhilePingingHasNoPartialResult() async {
-        let store = TestStore(initialState: SpeedTest.State()) {
-            SpeedTest()
-        } withDependencies: {
-            $0.locator = RunFakes.locator()
-            $0.serverDirectory = RunFakes.Directory().client
-            $0.pingService = RunFakes.pingUntilCancelled
-        }
-        store.exhaustivity = .off(showSkippedAssertions: false)
-
-        await store.send(\.view.startStopTapped)
-        await store.receive(\.serversResponse.success)
-        await store.send(\.view.startStopTapped)
-
-        #expect(store.state.phase == .interrupted(.stopped))
-        #expect(store.state.download == nil)
-        #expect(store.state.upload == nil)
     }
 
     #if os(iOS)

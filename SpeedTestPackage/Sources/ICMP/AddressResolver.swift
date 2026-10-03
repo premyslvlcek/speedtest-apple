@@ -24,7 +24,7 @@ enum AddressResolver {
         }
     }
 
-    static func lookUp(_ host: String) -> ResolvedAddress? {
+    private static func lookUp(_ host: String) -> ResolvedAddress? {
         var hints = addrinfo()
         hints.ai_family = PF_UNSPEC
         hints.ai_socktype = SOCK_DGRAM

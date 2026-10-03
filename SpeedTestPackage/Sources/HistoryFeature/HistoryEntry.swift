@@ -5,14 +5,12 @@
 //  Created by Premysl Vlcek on 02.10.2026.
 //
 
+import ComposableArchitecture
 import Foundation
-import SQLiteData
 
 /// One finished run, as the history list shows it. The values are copied, not referenced: the server list
 /// changes, a past result doesn't.
-@Table
-public struct HistoryEntry: Hashable, Identifiable, Sendable {
-    public let id: Int
+public struct HistoryEntry: Codable, Hashable, Identifiable, Sendable {
     public var date: Date
     public var serverProvider: String
     public var serverCity: String
@@ -23,16 +21,8 @@ public struct HistoryEntry: Hashable, Identifiable, Sendable {
     public var uploadMbps: Double?
     public var ipAddress: String?
     public var ipProvider: String?
-}
 
-/// The macro doesn't carry `Sendable` or `Equatable` over to the draft: one is needed to write it from an effect,
-/// the other to compare what a run saved.
-extension HistoryEntry.Draft: Sendable, Equatable {}
-
-public extension HistoryEntry.Draft {
-    /// A new entry for a run that just finished. Public because the macro's memberwise initializer is internal,
-    /// and the speed-test feature, another module, records the runs.
-    init(
+    public init(
         recordedAt date: Date,
         serverProvider: String,
         serverCity: String,
@@ -42,15 +32,26 @@ public extension HistoryEntry.Draft {
         ipAddress: String?,
         ipProvider: String?
     ) {
-        self.init(
-            date: date,
-            serverProvider: serverProvider,
-            serverCity: serverCity,
-            pingMilliseconds: pingMilliseconds,
-            downloadMbps: downloadMbps,
-            uploadMbps: uploadMbps,
-            ipAddress: ipAddress,
-            ipProvider: ipProvider
-        )
+        self.date = date
+        self.serverProvider = serverProvider
+        self.serverCity = serverCity
+        self.pingMilliseconds = pingMilliseconds
+        self.downloadMbps = downloadMbps
+        self.uploadMbps = uploadMbps
+        self.ipAddress = ipAddress
+        self.ipProvider = ipProvider
+    }
+
+    /// Two runs never finish at the same instant.
+    public var id: Date {
+        date
+    }
+}
+
+public extension SharedKey where Self == FileStorageKey<[HistoryEntry]>.Default {
+    /// The finished runs, newest first, in a JSON file in Application Support. Tests and previews keep it in
+    /// memory (`defaultFileStorage`).
+    static var history: Self {
+        Self[.fileStorage(.applicationSupportDirectory.appending(component: "history.json")), default: []]
     }
 }

@@ -1,6 +1,24 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "history.cancel" : {
+      "comment" : "Cancel button of the alert that asks before clearing the history.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zrušit"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
+          }
+        }
+      }
+    },
     "history.clear" : {
       "comment" : "Toolbar button that deletes every saved result (asks first).",
       "extractionState" : "manual",
@@ -8,7 +26,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vymazat"
+            "value" : "Smazat"
           }
         },
         "en" : {
@@ -98,7 +116,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Stahování %@ megabitů za sekundu"
+            "value" : "Stahování v megabitech za sekundu: %@"
           }
         },
         "en" : {
@@ -188,13 +206,13 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ Mb/s"
+            "value" : "%@ Mb/s"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ Mbps"
+            "value" : "%@ Mbps"
           }
         }
       }
@@ -224,7 +242,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Odesílání %@ megabitů za sekundu"
+            "value" : "Odesílání v megabitech za sekundu: %@"
           }
         },
         "en" : {

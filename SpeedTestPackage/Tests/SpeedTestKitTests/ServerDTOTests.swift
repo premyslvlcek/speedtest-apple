@@ -20,10 +20,7 @@ import Testing
         let first = try #require(servers.first)
         #expect(first.provider == "jablonka.cz")
         #expect(first.city == "Prague")
-        #expect(first.port == 80)
-        #expect(first.country == "Czechia")
-        #expect(first.countryCode == "CZ")
-        #expect(first.speedMbps == 1000)
+        #expect(first.url.port == 80)
         #expect(first.coordinate == Coordinate(latitude: 50.08000183105469, longitude: 14.420000076293945))
     }
 
@@ -33,7 +30,7 @@ import Testing
 
         let shared = servers.filter { $0.host.hasPrefix("zwedgsvak0ky6ulf0ta") }
 
-        #expect(shared.map(\.port) == [81, 88])
+        #expect(shared.map(\.url.port) == [81, 88])
         #expect(shared.map(\.city) == ["Nove Mesto nad Metuji", "Prague"])
     }
 
@@ -44,16 +41,5 @@ import Testing
         let servers = try ServerDTO.servers(from: Fixture.data("servers-mixed"))
 
         #expect(servers.map(\.provider) == ["Alpha", "Beta"])
-    }
-
-    @Test func optionalFieldsGetDefaults() throws {
-        let json = #"[{"url":"https://noport.wifiman.me","latitude":50,"longitude":14,"provider":"P","city":"C"}]"#
-
-        let server = try #require(try ServerDTO.servers(from: Data(json.utf8)).first)
-
-        #expect(server.port == 443)
-        #expect(server.country.isEmpty)
-        #expect(server.countryCode.isEmpty)
-        #expect(server.speedMbps == 0)
     }
 }

@@ -16,10 +16,13 @@ final class TransferSession: NSObject, URLSessionDataDelegate, Sendable {
         var ledger: TransferLedger
         var session: URLSession?
         var waiters: [CheckedContinuation<Void, any Error>] = []
-        var replies: [Int: Data] = [:]
-    }
 
-    private static let logger = Logger(subsystem: "SpeedTestKit", category: "Transfer")
+        /// The waiters for the first byte, removed so each is resumed exactly once.
+        mutating func takeWaiters() -> [CheckedContinuation<Void, any Error>] {
+            defer { waiters = [] }
+            return waiters
+        }
+    }
 
     private let server: Server
     private let direction: TransferDirection
@@ -48,6 +51,10 @@ final class TransferSession: NSObject, URLSessionDataDelegate, Sendable {
         state.withLock { $0.ledger.isAlive }
     }
 
+    var wasRefused: Bool {
+        state.withLock { $0.ledger.wasRefused }
+    }
+
     func start() {
         let sessionConfiguration = URLSessionConfiguration.ephemeral
         sessionConfiguration.urlCache = nil
@@ -71,7 +78,8 @@ final class TransferSession: NSObject, URLSessionDataDelegate, Sendable {
                     if state.ledger.hasFirstByte {
                         return .success(())
                     }
-                    if state.ledger.isCancelled {
+                    // A task cancelled before it got here has already run `onCancel`, with nothing to resume.
+                    if state.ledger.isCancelled || Task.isCancelled {
                         return .failure(CancellationError())
                     }
                     if !state.ledger.isAlive {
@@ -89,12 +97,16 @@ final class TransferSession: NSObject, URLSessionDataDelegate, Sendable {
         }
     }
 
+    /// Resumes everyone waiting for the first byte. Internal so a test can release a waiter that was left waiting.
+    func resumeWaiters(with result: Result<Void, any Error>) {
+        let waiters = state.withLock { $0.takeWaiters() }
+        waiters.forEach { $0.resume(with: result) }
+    }
+
     func cancel() {
         let (session, waiters) = state.withLock { state in
             state.ledger.cancel()
-            let waiters = state.waiters
-            state.waiters = []
-            return (state.session, waiters)
+            return (state.session, state.takeWaiters())
         }
         session?.invalidateAndCancel()
         waiters.forEach { $0.resume(throwing: CancellationError()) }
@@ -109,7 +121,7 @@ final class TransferSession: NSObject, URLSessionDataDelegate, Sendable {
         completionHandler: @escaping @Sendable (URLSession.ResponseDisposition) -> Void
     ) {
         let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
-        guard !(200 ..< 300).contains(statusCode) else {
+        guard !HTTPStatusError.successCodes.contains(statusCode) else {
             completionHandler(.allow)
             return
         }
@@ -120,20 +132,16 @@ final class TransferSession: NSObject, URLSessionDataDelegate, Sendable {
     }
 
     func urlSession(_: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
-        let taskID = dataTask.taskIdentifier
-        switch direction {
-        case .download:
-            let bytes = Int64(data.count)
-            let isFirstByte = state.withLock { $0.ledger.count(bytes, task: taskID) }
-            if isFirstByte {
-                resumeWaiters(with: .success(()))
-            }
+        // An upload's answer is `{"size": N}`, not transferred bytes.
+        guard direction == .download else {
+            return
+        }
 
-        case .upload:
-            // The upload reply is `{"size": N}`, not transferred bytes.
-            #if DEBUG
-                state.withLock { $0.replies[taskID, default: Data()].append(data) }
-            #endif
+        let taskID = dataTask.taskIdentifier
+        let bytes = Int64(data.count)
+        let isFirstByte = state.withLock { $0.ledger.count(bytes, task: taskID) }
+        if isFirstByte {
+            resumeWaiters(with: .success(()))
         }
     }
 
@@ -148,7 +156,8 @@ final class TransferSession: NSObject, URLSessionDataDelegate, Sendable {
             return
         }
 
-        // Bytes handed to the socket, not confirmed by the server (the README says so).
+        // Bytes handed to the network stack, not confirmed by the server; the meter's upload warm-up offsets the
+        // head start that gives.
         let taskID = task.taskIdentifier
         let isFirstByte = state.withLock { $0.ledger.count(bytesSent, task: taskID) }
         if isFirstByte {
@@ -158,21 +167,12 @@ final class TransferSession: NSObject, URLSessionDataDelegate, Sendable {
 
     func urlSession(_: URLSession, task: URLSessionTask, didCompleteWithError error: (any Error)?) {
         let taskID = task.taskIdentifier
-        #if DEBUG
-            let reply = state.withLock { $0.replies.removeValue(forKey: taskID) }
-            if direction == .upload, error == nil {
-                checkUploadReply(reply)
-            }
-        #endif
-
         let (completion, failure, waiters) = state.withLock { state in
             let completion = state.ledger.complete(task: taskID, error: error)
             guard completion == .connectionFailed, !state.ledger.isAlive, !state.ledger.hasFirstByte else {
                 return (completion, (any Error)?.none, [CheckedContinuation<Void, any Error>]())
             }
-            let waiters = state.waiters
-            state.waiters = []
-            return (completion, state.ledger.lastError, waiters)
+            return (completion, state.ledger.lastError, state.takeWaiters())
         }
 
         if let failure {
@@ -208,34 +208,6 @@ private extension TransferSession {
             task.resume()
         }
     }
-
-    func resumeWaiters(with result: Result<Void, any Error>) {
-        let waiters = state.withLock { state in
-            let waiters = state.waiters
-            state.waiters = []
-            return waiters
-        }
-        waiters.forEach { $0.resume(with: result) }
-    }
-
-    #if DEBUG
-        /// The server confirms each upload with `{"size": N}`. A mismatch is logged, never asserted.
-        func checkUploadReply(_ reply: Data?) {
-            struct Reply: Decodable {
-                let size: Int
-            }
-
-            guard let reply, let decoded = try? JSONDecoder().decode(Reply.self, from: reply) else {
-                Self.logger.debug("Upload reply missing or not JSON")
-                return
-            }
-            if decoded.size != uploadBody.count {
-                Self.logger.error(
-                    "Upload reply size \(decoded.size) differs from the \(self.uploadBody.count) bytes sent"
-                )
-            }
-        }
-    #endif
 
     static func randomBody(count: Int) -> Data {
         var data = Data(count: count)

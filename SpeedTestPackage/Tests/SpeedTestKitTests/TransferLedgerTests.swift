@@ -75,6 +75,18 @@ import Testing
 
         #expect(completion == .connectionFailed)
         #expect(ledger.lastError as? HTTPStatusError == HTTPStatusError(statusCode: 429))
+        #expect(ledger.wasRefused)
+    }
+
+    /// A connection lost before the last one was refused: the transfer was lost, not refused.
+    @Test func itWasRefusedOnlyIfEveryFailedConnectionWasRefused() {
+        var ledger = TransferLedger(connections: 2)
+        _ = ledger.complete(task: 1, error: URLError(.networkConnectionLost))
+        ledger.reject(task: 2, statusCode: 500)
+        _ = ledger.complete(task: 2, error: URLError(.cancelled))
+
+        #expect(ledger.lastError as? HTTPStatusError == HTTPStatusError(statusCode: 500))
+        #expect(!ledger.wasRefused)
     }
 
     @Test func everyConnectionFailedMeansNotAlive() {
@@ -84,6 +96,7 @@ import Testing
 
         #expect(!ledger.isAlive)
         #expect((ledger.lastError as? URLError)?.code == .serverCertificateUntrusted)
+        #expect(!ledger.wasRefused)
     }
 
     @Test func afterCancelNothingCountsAndCompletionsAreIgnored() {
@@ -97,6 +110,6 @@ import Testing
         #expect(!isFirstByte)
         #expect(ledger.totalBytes == 100)
         #expect(completion == .ignored)
-        #expect(ledger.aliveConnections == 2)
+        #expect(!ledger.isAlive)
     }
 }

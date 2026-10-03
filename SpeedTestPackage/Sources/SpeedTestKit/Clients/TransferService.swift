@@ -15,19 +15,23 @@ public struct TransferHandle: Sendable {
     public var firstByte: @Sendable () async throws -> Void
     /// The bytes counted so far. Non-blocking: the transfer meter reads it on every sample tick.
     public var totalBytes: @Sendable () -> Int64
-    /// False once every connection has failed.
+    /// False once every connection has failed, or the transfer was cancelled.
     public var isAlive: @Sendable () -> Bool
+    /// True when every connection that failed was refused by the server (a non-2xx answer); none was lost.
+    public var wasRefused: @Sendable () -> Bool
     public var cancel: @Sendable () -> Void
 
     public init(
         firstByte: @escaping @Sendable () async throws -> Void,
         totalBytes: @escaping @Sendable () -> Int64,
         isAlive: @escaping @Sendable () -> Bool,
+        wasRefused: @escaping @Sendable () -> Bool = { false },
         cancel: @escaping @Sendable () -> Void
     ) {
         self.firstByte = firstByte
         self.totalBytes = totalBytes
         self.isAlive = isAlive
+        self.wasRefused = wasRefused
         self.cancel = cancel
     }
 }
