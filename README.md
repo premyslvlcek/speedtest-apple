@@ -138,6 +138,8 @@ say what happened. Errors appear inline with Try Again, never as alerts.
 **Privacy.** Only `https` hosts under `wifiman.me` are accepted from the directory. The coordinates sent are rounded to
 about 1 km. Nothing is sent anywhere else, and nothing is cached: the directory and the transfers use ephemeral
 sessions. History stays on the device, in the app's container (encrypted at rest on iOS; on a Mac, with FileVault).
+The app's privacy manifest (`SpeedTest/PrivacyInfo.xcprivacy`) declares no tracking and no collected data, and one
+required-reason API: `UserDefaults`, which keeps the upload switch.
 
 **Beyond the brief, kept out of the way.** The main screen is the brief's screen. Upload is a switch below the card
 (off by default), history a sheet behind a toolbar button, the IP one quiet line. On iPad and the Mac the same screen
