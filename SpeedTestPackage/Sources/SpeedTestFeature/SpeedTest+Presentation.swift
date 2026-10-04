@@ -180,6 +180,11 @@ extension SpeedTest.State {
     }
 
     var notes: [Note] {
+        // A run that failed before it had servers (offline, say) picked none, by IP or otherwise.
+        guard failure == nil || !candidates.isEmpty else {
+            return []
+        }
+
         var notes: [Note] = []
         switch location {
         case .notAuthorized:
