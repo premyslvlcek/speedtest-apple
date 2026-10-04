@@ -168,7 +168,8 @@ struct TransferMeasurement: Sendable {
             group.addTask {
                 try await clock.sleep(for: stallTimeout)
                 // Only one side decides: the timeout cancels the connections only if the first byte hasn't
-                // claimed the outcome already, and once it has claimed it, a late first byte is a stall.
+                // claimed the outcome already, and once the timeout has claimed it, a first byte that arrives later is
+                // still a stall.
                 if outcome.withLock({ $0.claim(.timedOut) }) {
                     handle.cancel()
                 }
@@ -213,9 +214,9 @@ struct TransferMeasurement: Sendable {
             // duration, but doesn't count the extra bytes over the shorter time.
             var sample = sampler.add(elapsed: elapsed, totalBytes: handle.totalBytes() - bytesAtStart)
             sample.elapsed = wakeUp.elapsed
-            // During a warm-up the readings are taken, so the window and the average can start after it, but not
-            // shown: they'd show the head start as speed. Decided by the tick, not the wake-up: a real clock wakes a
-            // little late, and the tick at the warm-up's end would otherwise be shown.
+            // Readings during the warm-up are taken, so the window and the average start from its end, but not
+            // shown: they'd show the head start as speed. The tick decides, not the wake-up: a real clock wakes a
+            // little late, so the tick at the warm-up's end would otherwise be shown.
             if target > averageFrom {
                 onSample(sample)
             }

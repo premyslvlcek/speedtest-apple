@@ -18,7 +18,7 @@ public struct Coordinate: Sendable, Hashable {
     }
 
     /// Great-circle distance in meters (haversine on the mean Earth radius). Computed on the device, because
-    /// the directory's own ordering isn't by distance when it locates us by IP.
+    /// the directory's order isn't trusted to be by distance.
     ///
     /// Not `CLLocation.distance(from:)`: plain arithmetic keeps the models free of Core Location, and a pure
     /// function is exact to repeat, so a test pins it. Within 0.5% of the ellipsoid distance, which never changes
@@ -39,7 +39,7 @@ public struct Coordinate: Sendable, Hashable {
     /// Mean Earth radius in meters (IUGG).
     private static let earthRadius = 6_371_008.8
 
-    /// The haversine function, hav(θ) = sin²(θ / 2), which gives the formula its name.
+    /// The haversine function, hav(θ) = sin²(θ / 2).
     private static func haversine(_ angle: Double) -> Double {
         let halfSine = sin(angle / 2)
         return halfSine * halfSine
