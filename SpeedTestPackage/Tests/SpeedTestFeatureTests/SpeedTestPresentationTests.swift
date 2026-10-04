@@ -154,6 +154,15 @@ import Testing
         #expect(state.isApproximate)
     }
 
+    /// Offline, the location times out and then the server list fails: no servers were picked, so no note says how.
+    @Test func aRunThatFailedBeforeItHadServersHasNoLocationNote() {
+        var state = SpeedTest.State()
+        state.location = .unavailable
+        state.phase = .failed(.offline)
+
+        #expect(state.notes.isEmpty)
+    }
+
     /// The download average stays in its row; under "Connecting…" it would read as the upload's speed.
     @Test func whileTheUploadConnectsTheBigNumberIsEmpty() {
         var state = SpeedTest.State.finishedFixture

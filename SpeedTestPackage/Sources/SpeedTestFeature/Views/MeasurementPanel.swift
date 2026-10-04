@@ -218,6 +218,15 @@ private struct BigNumber: View {
                 // Light, so the dash doesn't read as a solid bar at this size.
                 .fontWeight(.light)
                 .foregroundStyle(Palette.secondaryText)
+                // While a run works towards its first number (locating, pinging, connecting), a static dash reads
+                // as frozen: a spinner in its place, in the same space, so nothing moves when the number arrives.
+                .opacity(store.isRunning ? 0 : 1)
+                .overlay {
+                    if store.isRunning {
+                        ProgressView()
+                            .controlSize(.large)
+                    }
+                }
         }
     }
 

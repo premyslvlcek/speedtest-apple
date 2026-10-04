@@ -5,8 +5,8 @@
 //  Created by Premysl Vlcek on 01.10.2026.
 //
 
-/// The only errors a run's stream fails with. Cancellation isn't one of them: Stop ends the
-/// stream quietly.
+/// The only errors a run ends with: the transfer meter and the reducer map everything else to one of these.
+/// Cancellation isn't one of them: Stop ends a run quietly.
 public enum SpeedTestError: Error, Sendable, Equatable {
     case offline
     case directoryUnavailable

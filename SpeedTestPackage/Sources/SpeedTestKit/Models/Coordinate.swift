@@ -20,9 +20,9 @@ public struct Coordinate: Sendable, Hashable {
     /// Great-circle distance in meters (haversine on the mean Earth radius). Computed on the device, because
     /// the directory's own ordering isn't by distance when it locates us by IP.
     ///
-    /// Not `CLLocation.distance(from:)`: it can return wrong values when several threads call it for the first
-    /// time at once. This is plain arithmetic, so it's exact to repeat and safe from any thread. Within 0.5% of
-    /// the ellipsoid distance, which never changes which servers are nearest.
+    /// Not `CLLocation.distance(from:)`: plain arithmetic keeps the models free of Core Location, and a pure
+    /// function is exact to repeat, so a test pins it. Within 0.5% of the ellipsoid distance, which never changes
+    /// which servers are nearest.
     public func distance(to other: Coordinate) -> Double {
         let latitude1 = latitude.radians
         let latitude2 = other.latitude.radians

@@ -18,7 +18,8 @@ public struct ChartPoint: Sendable, Equatable {
     }
 }
 
-/// The live speed graph: an area under a line, over a fixed time axis, with an optional dashed average.
+/// The live speed graph: an area under a line, from the first point to the end of the transfer, with an optional
+/// dashed average.
 /// Decorative for VoiceOver: the big number above it carries the same information.
 ///
 /// Inside an animation the newest point moves from the previous sample to the new one frame by frame, so the line
@@ -83,7 +84,7 @@ public struct SpeedChart: View, Animatable {
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
             }
         }
-        .chartXScale(domain: 0 ... max(duration, 0.1))
+        .chartXScale(domain: Self.timeDomain(points: points, duration: duration))
         .chartYScale(domain: 0 ... Self.upperBound(points: points, average: average))
         // Only the head point animates (`animatableData`); Charts' own animation of every mark would fight it.
         .transaction { $0.animation = nil }
@@ -112,6 +113,14 @@ public struct SpeedChart: View, Animatable {
         }
 
         return points.dropLast().filter { $0.seconds < head.seconds } + [head]
+    }
+
+    /// From the first point to the end of the transfer, so the line starts at the left edge. The first sample comes
+    /// one interval after the first byte, and an upload's first comes after its warm-up: from zero, the graph would
+    /// start with a gap. Before the first point, from zero. Never an empty range.
+    nonisolated static func timeDomain(points: [ChartPoint], duration: Double) -> ClosedRange<Double> {
+        let start = points.first?.seconds ?? 0
+        return start ... max(duration, start + 0.1)
     }
 
     private var averageLine: [Double] {
