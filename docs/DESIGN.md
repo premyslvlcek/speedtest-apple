@@ -34,7 +34,7 @@ App target (iOS universal + macOS)
 |---|---|---|
 | `ICMP` | Darwin, Foundation | Sending and parsing ICMP echo requests, usable by any app. |
 | `SpeedTestKit` | ICMP, CoreLocation, Network, swift-dependencies | The dependency clients of a run (live and scripted), the transfer meter, and the pure rules: server selection, throughput sampling, error mapping. No UI, no TCA. |
-| `SpeedTestFeature` | SpeedTestKit, HistoryFeature, DesignSystem, TCA | The reducer that drives a run, and the screen. It saves a finished run through `HistoryClient` and never sees where runs are kept. |
+| `SpeedTestFeature` | SpeedTestKit, ICMP, HistoryFeature, DesignSystem, TCA | The reducer that drives a run, and the screen. It saves a finished run through `HistoryClient` and never sees where runs are kept. |
 | `DesignSystem` | SwiftUI, Charts | Formatting, colors, the button and card styles, the animated number, the speed chart. It takes plain values. |
 | `HistoryFeature` | DesignSystem, TCA | The history, a JSON file through `@Shared(.fileStorage)`; `HistoryClient` (save a run), the reducer and the sheet. |
 
@@ -216,12 +216,13 @@ decimal. Ping in whole milliseconds, "<1 ms" below one. Numbers are formatted in
   mode, ranking, the failover target); decoding the real directory JSON and the error mapping through a stubbed
   `URLProtocol`; the sampler; the transfer meter's sampling, the bytes before t0, failures, a refused upload,
   interruptions, and both rules of the first-byte race (a real error beats a coinciding timeout; a byte after the
-  timeout cancelled the connections is a stall), against a test clock.
+  timeout cancelled the connections is a stall), against a test clock; and the upload's warm-up on a clock that wakes
+  late, as a real one does.
 - **SpeedTestFeature:** exhaustive `TestStore` tests for the run from Start to the chosen server, the transfers,
-  failover, Stop at each phase, background, retry and the upload switch, with fakes for every dependency. A
-  dependency a test didn't provide fails the test if the reducer calls it. The screen's text and the graph's data
-  are tested as plain functions of the state. Which runs are saved, and what an entry holds, is recorded by a fake
-  `HistoryClient`.
+  failover, Stop while connecting, downloading and uploading, background, retry and the upload switch, with fakes
+  for every dependency. A dependency a test didn't provide fails the test if the reducer calls it. The screen's text
+  and the graph's data are tested as plain functions of the state. Which runs are saved, and what an entry holds, is
+  recorded by a fake `HistoryClient`.
 - **HistoryFeature:** the live client putting a new run first, deleting a row, Clear with its confirmation, and
   Done, against the in-memory file storage every test gets.
 - **UI test:** one smoke test of the real app, launched with `-scriptedRun` (Debug builds only): the four dependency

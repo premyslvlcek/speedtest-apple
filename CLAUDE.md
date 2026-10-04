@@ -81,10 +81,11 @@ The tools are pinned in the `Mintfile`; `mint bootstrap` installs them.
 
 **Effects**
 - `.run { [value = state.value] send in await send(.xResponse(Result { … })) }`.
-- One cancel ID type per long-running effect: `struct FooId: Hashable, Sendable {}` with `.cancellable(id:)`. The effect
-  that starts something restartable uses `cancelInFlight: true`.
+- One cancel ID type per long-running flow: the run's steps share `SpeedTestId`, so Stop cancels them all at once; the
+  IP lookup has its own. `struct FooId: Hashable, Sendable {}` with `.cancellable(id:)`. The effect that starts
+  something restartable uses `cancelInFlight: true`.
 - Time through `@Dependency(\.continuousClock)`, durations as static constants.
-- The package enables TCA's `ComposableArchitecture2Deprecations` trait. Don't use what it or TCA 1.25 deprecate:
+- The package enables TCA's `ComposableArchitecture2Deprecations` trait. Don't use what it or TCA 1.26 deprecate:
   `Effect.concatenate`, `Effect.map`, `.animation()`/`.debounce`/`.throttle` on effects, `store.publisher`,
   `Store.withState`, the reducer-builder `onChange`, `@Reducer(state:action:)`, `store.send(_:animation:)`,
   `store.send(_:transaction:)`, `Effect.transaction(_:)`, `Scope(state:action:)`, and calling `reduce(into:action:)`
@@ -154,7 +155,7 @@ The tools are pinned in the `Mintfile`; `mint bootstrap` installs them.
   the trait keeps it on until the last test using it has finished. A suite that creates a `TestStore` gets the trait
   too: a `TestStore` turns the switch on and, when released, puts back what it found, which could switch it off
   under another suite. `TestClock` wakes sleepers on time, so a rule about late wake-ups is tested as a pure
-  function.
+  function, or on `LateClock` (`SpeedTestKitTests`), an `ImmediateClock` that wakes every sleeper 1 ms late.
 - Every test and every assertion must be able to fail for a plausible bug in this repository's code. No
   tautologies: don't restate a literal or a one-line computed property, don't test the standard library or a
   dependency, and don't round-trip our own encoder and decoder when fixtures already pin both directions.

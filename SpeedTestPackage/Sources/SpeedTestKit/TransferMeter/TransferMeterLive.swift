@@ -199,7 +199,8 @@ struct TransferMeasurement: Sendable {
         var schedule = SampleSchedule(interval: configuration.sampleInterval, duration: duration)
 
         while true {
-            let wait = schedule.nextTarget - stopwatch.elapsed()
+            let target = schedule.nextTarget
+            let wait = target - stopwatch.elapsed()
             if wait > .zero {
                 try await clock.sleep(for: wait)
             }
@@ -213,8 +214,9 @@ struct TransferMeasurement: Sendable {
             var sample = sampler.add(elapsed: elapsed, totalBytes: handle.totalBytes() - bytesAtStart)
             sample.elapsed = wakeUp.elapsed
             // During a warm-up the readings are taken, so the window and the average can start after it, but not
-            // shown: they'd show the head start as speed.
-            if wakeUp.elapsed > averageFrom {
+            // shown: they'd show the head start as speed. Decided by the tick, not the wake-up: a real clock wakes a
+            // little late, and the tick at the warm-up's end would otherwise be shown.
+            if target > averageFrom {
                 onSample(sample)
             }
             if wakeUp.isLast {

@@ -151,7 +151,7 @@ The reducer, the dependency clients, concurrency, the ICMP details and the small
 | Kind | What it covers |
 |---|---|
 | Unit tests | ICMP packets against captured bytes, the reply matching, the pinger against a fake socket and the real loopback (IPv4 and IPv6, three pingers at once), server selection, the real directory JSON, the error mapping, the throughput sampler, and the transfer meter's sampling, stall race and failures against a test clock. |
-| Reducer tests | The run step by step with TCA's exhaustive `TestStore`: Start to the chosen server, download and upload, failover, Stop at each phase, background, retry, the upload switch, the IP lookup, which runs are saved. Plus the screen's text, the graph's data and what VoiceOver announces. |
+| Reducer tests | The run step by step with TCA's exhaustive `TestStore`: Start to the chosen server, download and upload, failover, Stop while connecting, downloading and uploading, background, retry, the upload switch, the IP lookup, which runs are saved. Plus the screen's text, the graph's data and what VoiceOver announces. |
 | History tests | Saving puts a run first, deleting, Clear with its confirmation, against in-memory file storage. |
 | UI test | One smoke test of the real app on a scripted run (no network, location or ICMP): the three fields fill, the address shows, the run lands in the history. |
 
@@ -162,9 +162,10 @@ compiler warning in this repository's sources fails CI.
 Checked by hand on an iPhone 14 Pro and an Intel Mac: ICMP over Wi-Fi and mobile data, ICMP from the sandboxed Mac
 app, the location dialogs, and the throughput path against `curl` and the web client.
 
-The screenshots and the GIF are real runs on a wired line on 3 October 2026, measured against Ubiquiti's servers in
-Prague. Two things are replaced, so nothing private shows: the public IP lookup answers with the documentation address
-203.0.113.7, and the location is fixed in central Prague, so the distances are measured from there.
+The screenshots and the GIF are real runs on a wired line on 3 October 2026, measured against Ubiquiti's servers
+listed near Prague. Two things are replaced, so nothing private shows: the public IP lookup answers with the
+documentation address 203.0.113.7, and the location is fixed in central Prague, so the distances are measured from
+there.
 
 ## Known limitations
 

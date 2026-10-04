@@ -56,6 +56,18 @@ import TestSupport
         #expect(measurement.samples.last?.averageMbps == 40)
     }
 
+    /// A real clock wakes a little after each tick. The tick at the warm-up's end still isn't shown: its window
+    /// reaches back to t0, so it would show the head start as speed.
+    @Test func aLateWakeUpAtTheWarmUpsEndShowsNoHeadStart() async {
+        let transfers = FakeTransferService([FakeTransfer(bytesPerRead: bytesPerRead, headStart: 8_000_000)])
+        let meter = makeMeter(transfer: transfers.service, clock: LateClock())
+
+        let measurement = await meter.measure(MeterFixtures.server, .upload, MeterFixtures.token).collect()
+
+        #expect(measurement.samples.count == 36)
+        #expect(measurement.samples.allSatisfy { $0.currentMbps == 40 })
+    }
+
     @Test func theTransferStartsWithTheGivenServerDirectionAndToken() async {
         let transfers = FakeTransferService()
         let meter = makeMeter(transfer: transfers.service)
