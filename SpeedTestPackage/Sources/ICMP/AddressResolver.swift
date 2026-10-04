@@ -16,7 +16,8 @@ import Foundation
 enum AddressResolver {
     static func resolve(_ host: String) async -> ResolvedAddress? {
         // getaddrinfo blocks, so it runs on a dispatch queue, off Swift's cooperative thread pool. It can't be
-        // interrupted: a cancelled ping still waits for it to finish (Stop doesn't, since it ends the stream).
+        // interrupted: a cancelled ping waits for it, then returns without sending anything. Stop doesn't wait: the
+        // reducer resets at once, and TCA drops whatever the cancelled effect sends later.
         await withCheckedContinuation { continuation in
             DispatchQueue.global(qos: .userInitiated).async {
                 continuation.resume(returning: lookUp(host))

@@ -8,8 +8,8 @@
 import Foundation
 
 public extension SpeedTestError {
-    /// The mapping for a run. Every error that ends a run goes through it, so the stream fails only with a
-    /// `SpeedTestError`. `nil` means the run was cancelled (Stop): finish the stream quietly.
+    /// The mapping for a run. Every error that ends a run goes through it, in the transfer meter and in the
+    /// reducer, so a run ends only with a `SpeedTestError`. `nil` means the run was cancelled (Stop): end quietly.
     static func mapping(_ error: any Error) -> SpeedTestError? {
         if let error = error as? SpeedTestError {
             return error
