@@ -16,7 +16,7 @@ import Testing
     // MARK: Candidates
 
     @Test func picksTheFiveNearestByDistanceNotByDirectoryOrder() {
-        // The directory's order isn't by distance when it locates us by IP. 0.01° of latitude ≈ 1.1 km.
+        // The directory's order isn't trusted to be by distance. 0.01° of latitude ≈ 1.1 km.
         let servers = [
             Server.fixture("far", latitude: 51.0755),
             Server.fixture("d3", latitude: 50.1055),

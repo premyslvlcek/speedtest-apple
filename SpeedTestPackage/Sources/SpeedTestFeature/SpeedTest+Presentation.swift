@@ -180,7 +180,7 @@ extension SpeedTest.State {
     }
 
     var notes: [Note] {
-        // A run that failed before it had servers (offline, say) picked none, by IP or otherwise.
+        // A run that failed before it had servers (offline, say) gets no note on how they were picked.
         guard failure == nil || !candidates.isEmpty else {
             return []
         }

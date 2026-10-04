@@ -133,7 +133,7 @@ struct HistoryRow: View {
         isStacked ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4)) : AnyLayout(HStackLayout(spacing: 16))
     }
 
-    /// The arrow in the direction's color, as on the main screen.
+    /// The speed with an arrow in the direction's color.
     private func speed(_ mbps: Double, systemImage: String, tint: Color) -> some View {
         Label {
             Text(.historySpeed(SpeedFormat.mbps(mbps)))

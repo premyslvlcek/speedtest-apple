@@ -96,7 +96,7 @@ public struct SpeedChart: View, Animatable {
         }
         // Before the first point there's no scale worth showing (it would read 0 to 1 Mbps).
         .chartYAxis(points.isEmpty ? .hidden : .automatic)
-        // Fixed, so the card below never moves; the axis labels stop growing at xxxLarge to fit it.
+        // Fixed, so the card below never moves.
         .frame(height: Self.height)
         .accessibilityHidden(true)
     }

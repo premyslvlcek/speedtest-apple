@@ -307,7 +307,7 @@ import HistoryFeature
 
     static let now = Date(timeIntervalSince1970: 1_790_900_000)
 
-    /// A fixed clock for the entries' dates, and a history that records what the run saves.
+    /// A fixed date for the entries, and a history that records what the run saves.
     private static func store(
         _ state: SpeedTest.State,
         _ meter: RunFakes.Meter,

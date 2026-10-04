@@ -13,9 +13,10 @@ public enum SpeedTestError: Error, Sendable, Equatable {
     /// The directory answered 429. Never retried automatically.
     case rateLimited
     case noServers
-    /// The first choice and the failover both failed before their first byte.
+    /// A transfer couldn't run: the download's first choice and its failover never got a first byte, or the upload
+    /// couldn't start or was refused.
     case transferFailed
-    /// The primary network interface changed after the first byte.
+    /// After the first byte, the network went away or its primary interface changed.
     case networkChanged
     /// Every connection failed after the first byte.
     case connectionLost

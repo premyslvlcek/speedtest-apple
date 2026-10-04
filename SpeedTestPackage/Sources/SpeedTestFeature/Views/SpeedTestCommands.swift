@@ -53,7 +53,6 @@
             .disabled(store.history != nil && !store.isRunning)
         }
 
-        /// The button's title, as a menu item.
         private var title: Text {
             switch store.buttonTitle {
             case .runAgain:

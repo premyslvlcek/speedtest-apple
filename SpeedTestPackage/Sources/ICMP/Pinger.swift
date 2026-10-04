@@ -145,7 +145,7 @@ private struct RequestSender: Sendable {
         stopwatch: Stopwatch,
         continuation: AsyncStream<Pinger.Event>.Continuation
     ) async {
-        // However the sender ends (deadline or cancellation), the loop in `ping()` must stop waiting.
+        // However the sender ends (deadline or cancellation), the loop in `collect(_:into:)` must stop waiting.
         defer {
             continuation.finish()
         }

@@ -10,8 +10,8 @@ import ICMP
 /// Which servers to ping, and in what order to try them.
 public enum ServerSelector {
     /// With a location: the `nearestCount` closest by great-circle distance, ties in directory order.
-    /// Without one (approximate mode): the first `approximateCount` in directory order, with no distances,
-    /// because latency decides and the directory's order isn't by distance.
+    /// Without one (approximate mode): the first `approximateCount` in directory order, with no distances. More
+    /// than `nearestCount`, because the directory's order isn't by distance, so latency picks from a wider set.
     public static func candidates(
         from servers: [Server],
         location: Coordinate?,
@@ -74,8 +74,8 @@ public enum ServerSelector {
         }
     }
 
-    /// Compared field by field, which is exactly what tuple comparison does: tier, median, distance, input
-    /// position. A missing median or distance counts as equal (zero), so the next field decides.
+    /// Tier, median, distance, input position. A missing median or distance counts as zero, so the next field
+    /// decides.
     private static func rankKey(
         _ candidate: Candidate,
         offset: Int,

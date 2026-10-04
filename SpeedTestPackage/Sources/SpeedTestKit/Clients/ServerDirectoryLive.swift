@@ -114,7 +114,7 @@ struct DirectoryHTTPClient: Sendable {
 
     private static let coordinateFormat = "%.2f"
 
-    /// A body we can't read means the directory is unavailable, whatever the status said.
+    /// A 2xx answer whose body we can't read means the directory is unavailable.
     private func decoded<T>(_ decode: () throws -> T) throws -> T {
         do {
             return try decode()

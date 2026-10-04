@@ -164,7 +164,7 @@ public struct ResultRow: View {
         }
     }
 
-    /// A placeholder is quiet; a value isn't.
+    /// Placeholders and secondary rows are quiet; a primary value isn't.
     private var valueColor: Color {
         isSecondary || isPlaceholder ? Palette.secondaryText : Color.primary
     }

@@ -139,11 +139,11 @@ import Testing
     }
 }
 
-/// Offline codes (and a dropped connection) → offline, 429 → rate limited, everything else → unavailable.
+/// A dropped connection → offline, 429 → rate limited, an unreadable body → unavailable.
 private let directoryFailures: [(StubOutcome, SpeedTestError)] = [
     // The mapping itself is pinned in ErrorMappingTests; these rows prove the list request uses the directory's
-    // mapping: a dropped connection is offline here (a run would call it a transfer failure), 429 is busy, any
-    // other status or an unreadable body means unavailable.
+    // mapping: a dropped connection is offline here (a run would call it a transfer failure), 429 is busy, an
+    // unreadable body means unavailable.
     (.failure(URLError(.networkConnectionLost)), .offline),
     (.response(statusCode: 429, body: Data()), .rateLimited),
     (.response(statusCode: 200, body: Data("<html>busy</html>".utf8)), .directoryUnavailable)

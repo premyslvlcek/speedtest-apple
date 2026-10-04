@@ -63,6 +63,5 @@ struct ThroughputSampler: Sendable {
     }
 
     private static let bitsPerByte = 8.0
-    /// Network speeds use decimal megabits: 10⁶ bits, not 2²⁰.
     private static let bitsPerMegabit = 1_000_000.0
 }
