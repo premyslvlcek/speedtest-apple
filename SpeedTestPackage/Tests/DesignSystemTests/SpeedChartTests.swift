@@ -38,6 +38,14 @@ import Testing
         #expect(SpeedChart.upperBound(points: [ChartPoint(seconds: 0.25, mbps: 0)], average: 0) == 1)
     }
 
+    /// The line starts at the left edge: an upload's first sample comes after its 1 s warm-up, not at zero.
+    @Test func theTimeAxisStartsAtTheFirstPoint() {
+        let points = [ChartPoint(seconds: 1.25, mbps: 90), ChartPoint(seconds: 1.5, mbps: 92)]
+
+        #expect(SpeedChart.timeDomain(points: points, duration: 10) == 1.25 ... 10)
+        #expect(SpeedChart.timeDomain(points: [], duration: 10) == 0 ... 10)
+    }
+
     /// While the chart animates, its newest point is drawn at the in-between position; the others stay put.
     @Test func theNewestPointIsDrawnAtTheAnimatedHead() {
         let points = [ChartPoint(seconds: 0.25, mbps: 100), ChartPoint(seconds: 0.5, mbps: 200)]
