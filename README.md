@@ -162,8 +162,8 @@ compiler warning in this repository's sources fails CI.
 Checked by hand on an iPhone 14 Pro and an Intel Mac: ICMP over Wi-Fi and mobile data, ICMP from the sandboxed Mac
 app, the location dialogs, and the throughput path against `curl` and the web client.
 
-The screenshots and the GIF are real runs on a wired line on 3 October 2026, measured against Ubiquiti's servers
-listed near Prague. Two things are replaced, so nothing private shows: the public IP lookup answers with the
+The screenshots and the GIF are real runs on a wired line on 3 and 4 October 2026, measured against Ubiquiti's
+servers listed near Prague. Two things are replaced, so nothing private shows: the public IP lookup answers with the
 documentation address 203.0.113.7, and the location is fixed in central Prague, so the distances are measured from
 there.
 
